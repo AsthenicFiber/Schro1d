@@ -15,8 +15,27 @@ FORMS += \
     mainwindow.ui
 
 HEADERS += \
-    mainwindow.h
+    mainwindow.h \
+    lapacke.h \
+    lapacke_config.h \
+    lapacke_mangling.h \
+    matrix.h
 
 SOURCES += \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    matrix.cpp
+
+#LIBS += -L$$PWD/./ -lblas_win64_MT
+
+#INCLUDEPATH += $$PWD/.
+#DEPENDPATH += $$PWD/.
+
+#LIBS += -L$$PWD/./ -llapack_win64_MT
+
+INCLUDEPATH += $$PWD/.
+DEPENDPATH += $$PWD/.
+
+LIBS += \
+    -lblas_win64_MT \
+    -llapack_win64_MT
