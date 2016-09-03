@@ -53,8 +53,11 @@ std::string print_mat(Matrix A)
         for (int j = 0; j < A.cols(); j++)
         {
             char buffer [50];
-            //sprintf(buffer,"%g",A(i,j));
+#if defined(_MSC_VER) && _MSC_VER >= 1400
             sprintf_s(buffer,sizeof(buffer),"%g",A(i,j));
+#else
+            sprintf(buffer,"%g",A(i,j));
+#endif
             text.append(buffer);
             //text.append(std::to_string(A(i,j)));
             if (j != A.cols())
@@ -75,8 +78,11 @@ std::string print_mat(double *A, int rows, int cols)
         for (int j = 0; j < cols; j++)
         {
             char buffer [50];
-            //sprintf(buffer,"%g",A(i,j));
+#if defined(_MSC_VER) && _MSC_VER >= 1400
             sprintf_s(buffer,sizeof(buffer),"%g",A[i*cols+j]);
+#else
+            sprintf(buffer,"%g",A[i*cols+j]);
+#endif
             text.append(buffer);
             //text.append(std::to_string(A(i,j)));
             if (j != cols)
@@ -97,8 +103,12 @@ std::string print_mat(int *A, int rows, int cols)
         for (int j = 0; j < cols; j++)
         {
             char buffer [50];
-            //sprintf(buffer,"%g",A(i,j));
+            //sprintf(buffer,"%g",A[i*cols+j]);
+#if defined(_MSC_VER) && _MSC_VER >= 1400
             sprintf_s(buffer,sizeof(buffer),"%g",A[i*cols+j]);
+#else
+            sprintf(buffer,"%d",A[i*cols+j]);
+#endif
             text.append(buffer);
             //text.append(std::to_string(A(i,j)));
             if (j != cols)

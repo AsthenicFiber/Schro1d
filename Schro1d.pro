@@ -26,6 +26,8 @@ SOURCES += \
     mainwindow.cpp \
     matrix.cpp
 
+unix:!macx: CONFIG += qt debug
+
 #LIBS += -L$$PWD/./ -lblas_win64_MT
 
 #INCLUDEPATH += $$PWD/.
@@ -33,9 +35,48 @@ SOURCES += \
 
 #LIBS += -L$$PWD/./ -llapack_win64_MT
 
+#INCLUDEPATH += $$PWD/.
+#DEPENDPATH += $$PWD/.
+
+#LIBS += -L$$PWD/./ -llibblas
+#LIBS += -L$$PWD/./ -lliblapack
+#LIBS += -L$$PWD/./ -lliblapacke
+
+win32: LIBS += -L$$PWD/./ -llibblas
+
 INCLUDEPATH += $$PWD/.
 DEPENDPATH += $$PWD/.
 
-LIBS += \
-    -lblas_win64_MT \
-    -llapack_win64_MT
+win32:!win32-g++: PRE_TARGETDEPS += $$PWD/./libblas.lib
+else:win32-g++: PRE_TARGETDEPS += $$PWD/./liblibblas.a
+
+win32: LIBS += -L$$PWD/./ -lliblapack
+
+#INCLUDEPATH += $$PWD/.
+#DEPENDPATH += $$PWD/.
+
+win32:!win32-g++: PRE_TARGETDEPS += $$PWD/./liblapack.lib
+else:win32-g++: PRE_TARGETDEPS += $$PWD/./libliblapack.a
+
+win32: LIBS += -L$$PWD/./ -lliblapacke
+
+#INCLUDEPATH += $$PWD/.
+#DEPENDPATH += $$PWD/.
+
+win32:!win32-g++: PRE_TARGETDEPS += $$PWD/./liblapacke.lib
+else:win32-g++: PRE_TARGETDEPS += $$PWD/./libliblapacke.a
+
+unix:!macx: LIBS += -L$$PWD/./ -lblas
+
+#INCLUDEPATH += $$PWD/.
+#DEPENDPATH += $$PWD/.
+
+unix:!macx: LIBS += -L$$PWD/./ -llapack
+
+#INCLUDEPATH += $$PWD/.
+#DEPENDPATH += $$PWD/.
+
+unix:!macx: LIBS += -L$$PWD/./ -llapacke
+
+#INCLUDEPATH += $$PWD/.
+#DEPENDPATH += $$PWD/.
