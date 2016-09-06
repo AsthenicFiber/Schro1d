@@ -134,16 +134,18 @@ void MainWindow::on_runButton_clicked()
     Matrix A(2,2);
     A[0][0] = 1;
     A[0][1] = 2;
-    A[1][0] = 3;
+    A[1][0] = 2;
     A[1][1] = 4;
+    //Matrix Avec = A;
 
     Matrix B(2,1);
     B[0][0] = 1;
     B[1][0] = 1;
+    //Matrix Bi = B;
 
     //double a[2*2] = {1,2,3,4};
     //double b[2*1] = {1,1};
-    int ipiv[2] = {0,0};
+    //int ipiv[2] = {0,0};
 
     //int n = 2;
     //int nrhs = 1;
@@ -155,13 +157,20 @@ void MainWindow::on_runButton_clicked()
 
     //int info = 0;
 
-    LAPACKE_dgesv(LAPACK_ROW_MAJOR,A.rows(),B.cols(),A.mat(),A.cols(),ipiv,B.mat(),B.cols());
+    //LAPACKE_dgesv(LAPACK_ROW_MAJOR,A.rows(),B.cols(),A.mat(),A.cols(),ipiv,B.mat(),B.cols());
+    //LAPACKE_dgeev(LAPACK_ROW_MAJOR,'N','V',A.rows(),A.mat(),A.cols(),B.mat(),Bi.mat(),Avec.mat(),Avec.cols(),Avec.mat(),Avec.cols());
+    //LAPACKE_dsysv(LAPACK_ROW_MAJOR,'U',A.rows(),B.cols(),A.mat(),A.cols(),ipiv,B.mat(),B.cols());
+    LAPACKE_dsyev(LAPACK_ROW_MAJOR,'V','U',A.rows(),A.mat(),A.cols(),B.mat());
 
     //dgesv_(&n,&nrhs,a,&lda,ipiv,b,&ldb,&info);
 
     //outputText->append(QString::fromStdString(print_mat(ipiv,2,1)));
-    outputText->append(QString::fromStdString(print_mat(B.mat(),2,1)));
-    outputText->append(QString("%1\n").arg(B.cols()));
+    //outputText->append(QString::fromStdString(print_mat(A.mat(),2,2)));
+    //outputText->append(QString::fromStdString(print_mat(B.mat(),2,1)));
+    //outputText->append(QString::fromStdString(print_mat(Avec)));
+    outputText->append(QString::fromStdString(print_mat(B)));
+    outputText->append(QString::fromStdString(print_mat(A)));
+    //outputText->append(QString("%1\n").arg(B.cols()));
 
 
     //double A[2][2] = {1,2,3,4};
