@@ -42,7 +42,6 @@ unix:!macx: CONFIG += qt debug
 #LIBS += -L$$PWD/./ -lliblapack
 #LIBS += -L$$PWD/./ -lliblapacke
 
-
 win32: LIBS += -L$$PWD/../ -llibblas
 
 INCLUDEPATH += $$PWD/../

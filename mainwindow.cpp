@@ -154,8 +154,8 @@ void MainWindow::on_runButton_clicked()
     outputText->append(QString::fromStdString(print_mat(b,2,1)));
 
     int info;
-    info = LAPACKE_dgesv(LAPACK_ROW_MAJOR,n,nrhs,a,lda,ipiv,b,ldb);
 
+    info = LAPACKE_dgesv(LAPACK_ROW_MAJOR,n,nrhs,a,lda,ipiv,b,ldb);
     //dgesv_(&n,&nrhs,a,&lda,ipiv,b,&ldb,&info);
 
     outputText->append(QString::fromStdString(print_mat(ipiv,2,1)));
