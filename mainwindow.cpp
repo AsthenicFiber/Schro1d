@@ -14,8 +14,7 @@
 
 #include "lapacke.h"
 #include "matrix.h"
-//#include <armadillo/armadillo>
-//using namespace arma;
+#include "schro_pois.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -152,8 +151,8 @@ void MainWindow::on_runButton_clicked()
     //int lda = 2;
     //int ldb = 1;
 
-    outputText->append(QString::fromStdString(print_mat(A.mat(),2,2)));
-    outputText->append(QString::fromStdString(print_mat(B.mat(),2,1)));
+    //outputText->append(QString::fromStdString(print_mat(A)));
+    //outputText->append(QString::fromStdString(print_mat(B)));
 
     //int info = 0;
 
@@ -168,8 +167,27 @@ void MainWindow::on_runButton_clicked()
     //outputText->append(QString::fromStdString(print_mat(A.mat(),2,2)));
     //outputText->append(QString::fromStdString(print_mat(B.mat(),2,1)));
     //outputText->append(QString::fromStdString(print_mat(Avec)));
+    //outputText->append(QString::fromStdString(print_mat(B)));
+    //outputText->append(QString::fromStdString(print_mat(A)));
+
+    Matrix D(5,5);
+    D = diff2_n(5);
+
+    Matrix M(5,1);
+    for (int i = 0; i < M.rows(); i++)
+    {
+        M[i][0] = i+1;
+    }
+
+    M = vec2diag(M);
+    A = (D*M+M*D)*.5;
+    B = Matrix(5,1);
+    outputText->append(QString::fromStdString(print_mat(A)));
+    LAPACKE_dsyev(LAPACK_ROW_MAJOR,'V','U',A.rows(),A.mat(),A.cols(),B.mat());
     outputText->append(QString::fromStdString(print_mat(B)));
     outputText->append(QString::fromStdString(print_mat(A)));
+
+
     //outputText->append(QString("%1\n").arg(B.cols()));
 
 

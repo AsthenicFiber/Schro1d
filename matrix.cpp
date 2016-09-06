@@ -42,6 +42,8 @@ Matrix::Matrix(int rows, int cols) : m(rows), n(cols), p(new mel[rows*cols])
         n = 1;
         throw std::exception();
     }
+    for (int i = 0; i < m*n; i++)
+        p[i] = 0;
 }
 
 Matrix::Matrix() : m(1), n(1), p(new mel[1])
@@ -60,6 +62,7 @@ Matrix::Matrix() : m(1), n(1), p(new mel[1])
         n = 1;
         throw std::exception();
     }
+    p[0] = 0;
 }
 
 // Destructor
