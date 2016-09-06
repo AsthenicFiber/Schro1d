@@ -34,6 +34,7 @@ public:
     int length();
     int rows();
     int cols();
+    mel * mat();
 
     void activation();
 

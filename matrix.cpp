@@ -300,6 +300,11 @@ int Matrix::cols()
     return n;
 }
 
+mel* Matrix::mat()
+{
+    return p;
+}
+
 void Matrix::activation()
 {
     for (int i = 0; i < m*n; i++)
