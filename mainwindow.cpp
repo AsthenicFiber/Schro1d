@@ -8,6 +8,10 @@
 #define lapack_complex_float std::complex<float>
 #define lapack_complex_double std::complex<double>
 
+//#define ADD_
+//#define HAVE_LAPACK_CONFIG_H
+//#define LAPACK_COMPLEX_STRUCTURE
+
 #include "lapacke.h"
 #include "matrix.h"
 //#include <armadillo/armadillo>
@@ -134,18 +138,25 @@ void MainWindow::on_runButton_clicked()
     A[1][1] = 4;
 
     Matrix B(2,1);
-    B[0][0] = 1;
+    B[0][0] = 3;
     B[1][0] = 1;
 
     double a[2*2] = {1,2,3,4};
     double b[2*1] = {1,1};
     int ipiv[2] = {0,0};
 
+    int n = 2;
+    int nrhs = 1;
+    int lda = 2;
+    int ldb = 1;
+
     outputText->append(QString::fromStdString(print_mat(a,2,2)));
     outputText->append(QString::fromStdString(print_mat(b,2,1)));
 
-    lapack_int info;
-    info = LAPACKE_dgesv(LAPACK_ROW_MAJOR,2,1,a,2,ipiv,b,2);
+    int info;
+    info = LAPACKE_dgesv(LAPACK_ROW_MAJOR,n,nrhs,a,lda,ipiv,b,ldb);
+
+    //dgesv_(&n,&nrhs,a,&lda,ipiv,b,&ldb,&info);
 
     outputText->append(QString::fromStdString(print_mat(ipiv,2,1)));
     outputText->append(QString::fromStdString(print_mat(b,2,1)));

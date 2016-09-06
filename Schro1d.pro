@@ -42,29 +42,45 @@ unix:!macx: CONFIG += qt debug
 #LIBS += -L$$PWD/./ -lliblapack
 #LIBS += -L$$PWD/./ -lliblapacke
 
-win32: LIBS += -L$$PWD/./ -llibblas
 
-INCLUDEPATH += $$PWD/.
-DEPENDPATH += $$PWD/.
+win32: LIBS += -L$$PWD/../ -llibblas
 
-win32:!win32-g++: PRE_TARGETDEPS += $$PWD/./libblas.lib
-else:win32-g++: PRE_TARGETDEPS += $$PWD/./liblibblas.a
+INCLUDEPATH += $$PWD/../
+DEPENDPATH += $$PWD/../
 
-win32: LIBS += -L$$PWD/./ -lliblapack
+win32: LIBS += -L$$PWD/../ -lliblapack
+
+INCLUDEPATH += $$PWD/../
+DEPENDPATH += $$PWD/../
+
+win32: LIBS += -L$$PWD/../ -lliblapacke
+
+INCLUDEPATH += $$PWD/../
+DEPENDPATH += $$PWD/../
+
+#win32: LIBS += -L$$PWD/./ -llibblas
 
 #INCLUDEPATH += $$PWD/.
 #DEPENDPATH += $$PWD/.
 
-win32:!win32-g++: PRE_TARGETDEPS += $$PWD/./liblapack.lib
-else:win32-g++: PRE_TARGETDEPS += $$PWD/./libliblapack.a
+#win32:!win32-g++: PRE_TARGETDEPS += $$PWD/./libblas.lib
+#else:win32-g++: PRE_TARGETDEPS += $$PWD/./liblibblas.a
 
-win32: LIBS += -L$$PWD/./ -lliblapacke
+#win32: LIBS += -L$$PWD/./ -lliblapack
 
 #INCLUDEPATH += $$PWD/.
 #DEPENDPATH += $$PWD/.
 
-win32:!win32-g++: PRE_TARGETDEPS += $$PWD/./liblapacke.lib
-else:win32-g++: PRE_TARGETDEPS += $$PWD/./libliblapacke.a
+#win32:!win32-g++: PRE_TARGETDEPS += $$PWD/./liblapack.lib
+#else:win32-g++: PRE_TARGETDEPS += $$PWD/./libliblapack.a
+
+#win32: LIBS += -L$$PWD/./ -lliblapacke
+
+#INCLUDEPATH += $$PWD/.
+#DEPENDPATH += $$PWD/.
+
+#win32:!win32-g++: PRE_TARGETDEPS += $$PWD/./liblapacke.lib
+#else:win32-g++: PRE_TARGETDEPS += $$PWD/./libliblapacke.a
 
 unix:!macx: LIBS += -L$$PWD/./ -lblas
 
