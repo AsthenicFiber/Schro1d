@@ -1,17 +1,17 @@
 
-#include "matrix.h"
+#include "schro_pois.h"
 #include "lapacke.h"
 
 // Functions for Schrodinger Poisson solver
 
 
-/*void solve_sp(Matrix dEc, Matrix eps, Matrix m, Matrix Q, Matrix E)
+void solve_sp(Matrix dEc, Matrix eps, Matrix m, Matrix Q, Matrix E)
 {
     Matrix D = diff2_n(m.rows());
     dEc = vec2diag(dEc);
     eps = vec2diag(eps);
     m = vec2diag(m);
-}*/
+}
 
 Matrix diff2_n(int n)
 {

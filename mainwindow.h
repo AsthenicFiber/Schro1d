@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QPlainTextEdit>
 #include <QTextBrowser>
+#include <QLineEdit>
 //#include <map>
 
 namespace Ui {
@@ -22,14 +23,19 @@ public:
 
 private slots:
     void on_runButton_clicked();
+    void on_saveButton_clicked();
+    void on_loadButton_clicked();
 
 private:
     Ui::MainWindow *ui;
     QPushButton * runButton;
+    QPushButton * saveButton;
+    QPushButton * loadButton;
     QTextBrowser * outputText;
     QLabel * outputLabel;
     QLabel * inputLabel;
     QPlainTextEdit * inputText;
+    QLineEdit * filenameText;
 
 };
 

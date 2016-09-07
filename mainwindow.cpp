@@ -2,15 +2,12 @@
 #include "ui_mainwindow.h"
 #include <QString>
 #include "string.h"
+#include <fstream>
 
 //if visual c++
 #include <complex>
 #define lapack_complex_float std::complex<float>
 #define lapack_complex_double std::complex<double>
-
-//#define ADD_
-//#define HAVE_LAPACK_CONFIG_H
-//#define LAPACK_COMPLEX_STRUCTURE
 
 #include "lapacke.h"
 #include "matrix.h"
@@ -23,9 +20,16 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     runButton = new QPushButton("Run",this);
-    //runButton->setText("Run");
     runButton->setGeometry(QRect(QPoint(450,320),QSize(75,23)));
     connect(runButton, SIGNAL(clicked()), this, SLOT(on_runButton_clicked()));
+
+    saveButton = new QPushButton("Save",this);
+    saveButton->setGeometry(QRect(QPoint(450,240),QSize(75,23)));
+    connect(saveButton, SIGNAL(clicked()), this, SLOT(on_saveButton_clicked()));
+
+    loadButton = new QPushButton("Load",this);
+    loadButton->setGeometry(QRect(QPoint(450,280),QSize(75,23)));
+    connect(loadButton, SIGNAL(clicked()), this, SLOT(on_loadButton_clicked()));
 
     inputText = new QPlainTextEdit(this);
     inputText->setGeometry(10,50,411,261);
@@ -41,6 +45,9 @@ MainWindow::MainWindow(QWidget *parent) :
     outputLabel->setText("Output");
     outputLabel->setGeometry(10,330,411,13);
 
+    filenameText = new QLineEdit(this);
+    filenameText->setGeometry(450,200,120,20);
+    filenameText->setPlaceholderText(QString("Filename"));
 }
 
 MainWindow::~MainWindow()
@@ -48,24 +55,17 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-std::string print_mat(Matrix A)
+QString print_mat(Matrix A)
 {
-    std::string text;
+    QString text;
     for (int i = 0; i < A.rows(); i++)
     {
         for (int j = 0; j < A.cols(); j++)
         {
-            char buffer [50];
-#if defined(_MSC_VER) && _MSC_VER >= 1400
-            sprintf_s(buffer,sizeof(buffer),"%g",A(i,j));
-#else
-            sprintf(buffer,"%g",A(i,j));
-#endif
-            text.append(buffer);
-            //text.append(std::to_string(A(i,j)));
-            if (j != A.cols())
+            text.append(QString("%1").arg(A[i][j]));
+            if (j != A.cols()-1)
             {
-                text.append(" ");
+                text.append("\t");
             }
         }
         text.append("\n");
@@ -73,24 +73,17 @@ std::string print_mat(Matrix A)
     return text;
 }
 
-std::string print_mat(double *A, int rows, int cols)
+QString print_mat(double *A, int rows, int cols)
 {
-    std::string text;
+    QString text;
     for (int i = 0; i < rows; i++)
     {
         for (int j = 0; j < cols; j++)
         {
-            char buffer [50];
-#if defined(_MSC_VER) && _MSC_VER >= 1400
-            sprintf_s(buffer,sizeof(buffer),"%g",A[i*cols+j]);
-#else
-            sprintf(buffer,"%g",A[i*cols+j]);
-#endif
-            text.append(buffer);
-            //text.append(std::to_string(A(i,j)));
-            if (j != cols)
+            text.append(QString("%1").arg(A[i*cols+j]));
+            if (j != cols-1)
             {
-                text.append(" ");
+                text.append("\t");
             }
         }
         text.append("\n");
@@ -98,25 +91,17 @@ std::string print_mat(double *A, int rows, int cols)
     return text;
 }
 
-std::string print_mat(int *A, int rows, int cols)
+QString print_mat(int *A, int rows, int cols)
 {
-    std::string text;
+    QString text;
     for (int i = 0; i < rows; i++)
     {
         for (int j = 0; j < cols; j++)
         {
-            char buffer [50];
-            //sprintf(buffer,"%g",A[i*cols+j]);
-#if defined(_MSC_VER) && _MSC_VER >= 1400
-            sprintf_s(buffer,sizeof(buffer),"%g",A[i*cols+j]);
-#else
-            sprintf(buffer,"%d",A[i*cols+j]);
-#endif
-            text.append(buffer);
-            //text.append(std::to_string(A(i,j)));
-            if (j != cols)
+            text.append(QString("%1").arg(A[i*cols+j]));
+            if (j != cols-1)
             {
-                text.append(" ");
+                text.append("\t");
             }
         }
         text.append("\n");
@@ -134,41 +119,33 @@ void MainWindow::on_runButton_clicked()
     A[0][0] = 1;
     A[0][1] = 2;
     A[1][0] = 2;
-    A[1][1] = 4;
-    //Matrix Avec = A;
+    A[1][1] = 3;
+    Matrix Avec = A;
 
     Matrix B(2,1);
     B[0][0] = 1;
     B[1][0] = 1;
-    //Matrix Bi = B;
+    Matrix Bi = B;
 
-    //double a[2*2] = {1,2,3,4};
-    //double b[2*1] = {1,1};
-    //int ipiv[2] = {0,0};
+    int ipiv[2] = {0,0};
+    outputText->append(print_mat(ipiv,2,1));
 
-    //int n = 2;
-    //int nrhs = 1;
-    //int lda = 2;
-    //int ldb = 1;
+    int n = A.rows();
+    int nrhs = B.cols();
+    int lda = A.cols();
+    int ldb = B.cols();
 
-    //outputText->append(QString::fromStdString(print_mat(A)));
-    //outputText->append(QString::fromStdString(print_mat(B)));
+    LAPACKE_dgesv(LAPACK_ROW_MAJOR,n,nrhs,A.mat(),lda,ipiv,B.mat(),ldb);
+    LAPACKE_dgeev(LAPACK_ROW_MAJOR,'N','V',n,A.mat(),lda,B.mat(),Bi.mat(),Avec.mat(),Avec.cols(),Avec.mat(),Avec.cols());
+    LAPACKE_dsysv(LAPACK_ROW_MAJOR,'U',n,nrhs,A.mat(),lda,ipiv,B.mat(),ldb);
+    LAPACKE_dsyev(LAPACK_ROW_MAJOR,'V','U',n,A.mat(),lda,B.mat());
 
-    //int info = 0;
-
-    //LAPACKE_dgesv(LAPACK_ROW_MAJOR,A.rows(),B.cols(),A.mat(),A.cols(),ipiv,B.mat(),B.cols());
-    //LAPACKE_dgeev(LAPACK_ROW_MAJOR,'N','V',A.rows(),A.mat(),A.cols(),B.mat(),Bi.mat(),Avec.mat(),Avec.cols(),Avec.mat(),Avec.cols());
-    //LAPACKE_dsysv(LAPACK_ROW_MAJOR,'U',A.rows(),B.cols(),A.mat(),A.cols(),ipiv,B.mat(),B.cols());
-    LAPACKE_dsyev(LAPACK_ROW_MAJOR,'V','U',A.rows(),A.mat(),A.cols(),B.mat());
-
-    //dgesv_(&n,&nrhs,a,&lda,ipiv,b,&ldb,&info);
-
-    //outputText->append(QString::fromStdString(print_mat(ipiv,2,1)));
-    //outputText->append(QString::fromStdString(print_mat(A.mat(),2,2)));
-    //outputText->append(QString::fromStdString(print_mat(B.mat(),2,1)));
-    //outputText->append(QString::fromStdString(print_mat(Avec)));
-    //outputText->append(QString::fromStdString(print_mat(B)));
-    //outputText->append(QString::fromStdString(print_mat(A)));
+    //outputText->append(print_mat(ipiv,2,1));
+    //outputText->append(print_mat(A.mat(),2,2));
+    //outputText->append(print_mat(B.mat(),2,1));
+    //outputText->append(print_mat(Avec));
+    outputText->append(print_mat(B));
+    outputText->append(print_mat(A));
 
     Matrix D(5,5);
     D = diff2_n(5);
@@ -182,18 +159,56 @@ void MainWindow::on_runButton_clicked()
     M = vec2diag(M);
     A = (D*M+M*D)*.5;
     B = Matrix(5,1);
-    outputText->append(QString::fromStdString(print_mat(A)));
+    outputText->append(print_mat(A));
     LAPACKE_dsyev(LAPACK_ROW_MAJOR,'V','U',A.rows(),A.mat(),A.cols(),B.mat());
-    outputText->append(QString::fromStdString(print_mat(B)));
-    outputText->append(QString::fromStdString(print_mat(A)));
+    outputText->append(print_mat(B));
+    outputText->append(print_mat(A));
+}
 
+void MainWindow::on_saveButton_clicked()
+{
+    std::string filenm = filenameText->text().toStdString();
+    filenm.append(".txt");
 
-    //outputText->append(QString("%1\n").arg(B.cols()));
+    std::ofstream  outfile;
+    outfile.open(filenm, std::ifstream::out | std::ofstream::trunc);
+    if (outfile.is_open())
+    {
+        outputText->append("File Opened");
+        //char buffer[1000];
+        //buffer = inputText->toPlainText().toLatin1().data();
+        int len = inputText->toPlainText().size();
+        outfile.write(inputText->toPlainText().toLatin1().data(),len);
+    }
+    else
+    {
+        outputText->append("Error Openning File");
+    }
+    outfile.close();
+}
 
+void MainWindow::on_loadButton_clicked()
+{
+    std::string filenm = filenameText->text().toStdString();
+    filenm.append(".txt");
 
-    //double A[2][2] = {1,2,3,4};
-    //int ld = 2;
-
-    //arma::mat A(2,2);
-    //A << 1 << 2.4 << arma::endr << 3 << 4 << arma::endr;
+    std::ifstream  infile;
+    infile.open(filenm, std::ifstream::in);
+    if (infile.is_open())
+    {
+        outputText->append("File Opened");
+        inputText->clear();
+        QString text;
+        while (!infile.eof())
+        {
+            text.append(infile.get());
+        }
+        text.chop(1);
+        inputText->appendPlainText(text);
+    }
+    else
+    {
+        outputText->append("Error Openning File");
+    }
+    infile.close();
 }
