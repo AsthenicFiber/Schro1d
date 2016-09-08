@@ -196,7 +196,7 @@ void MainWindow::testrun()
 void MainWindow::on_saveButton_clicked()
 {
     std::string filenm = filenameText->text().toStdString();
-    filenm.append(".txt");
+    //filenm.append(".txt");
 
     std::ofstream  outfile;
     outfile.open(filenm, std::ifstream::out | std::ofstream::trunc);
@@ -218,7 +218,7 @@ void MainWindow::on_saveButton_clicked()
 void MainWindow::on_loadButton_clicked()
 {
     std::string filenm = filenameText->text().toStdString();
-    filenm.append(".txt");
+    //filenm.append(".txt");
 
     std::ifstream  infile;
     infile.open(filenm, std::ifstream::in);
