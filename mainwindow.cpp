@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QString>
+#include <QStringList>
 #include "string.h"
 #include <fstream>
 
@@ -48,6 +49,7 @@ MainWindow::MainWindow(QWidget *parent) :
     filenameText = new QLineEdit(this);
     filenameText->setGeometry(450,200,120,20);
     filenameText->setPlaceholderText(QString("Filename"));
+    connect(filenameText, SIGNAL(editingFinished()), this, SLOT(on_filenameText_editingFinished()));
 }
 
 MainWindow::~MainWindow()
@@ -110,6 +112,32 @@ QString print_mat(int *A, int rows, int cols)
 }
 
 void MainWindow::on_runButton_clicked()
+{
+    // Parse input text
+    QStringList in_text = inputText->toPlainText().split('\n',QString::SkipEmptyParts);
+
+    for (int i = 0; i < in_text.length(); i++)
+    {
+        // Parse each line
+        QString command = in_text[i].section(' ',0,0);
+        if (command == "Layer")
+        {
+            outputText->append(in_text[i].section(' ',1,-1));
+        }
+        else if (command == "Contact")
+        {
+            outputText->append(in_text[i].section(' ',1,-1));
+        }
+        else
+        {
+            outputText->append(in_text[i]);
+        }
+    }
+
+    // Run calculation
+}
+
+void MainWindow::testrun()
 {
     //outputText->append("Hello World!");
     std::string in_text = inputText->toPlainText().toStdString();
@@ -211,4 +239,15 @@ void MainWindow::on_loadButton_clicked()
         outputText->append("Error Openning File");
     }
     infile.close();
+}
+
+void MainWindow::on_filenameText_editingFinished()
+{
+    QString filenm = filenameText->text();
+    QString filext = filenm.section('.',-1,-1);
+    if (filext != "txt")
+    {
+        filenm.append(".txt");
+    }
+    filenameText->setText(filenm);
 }

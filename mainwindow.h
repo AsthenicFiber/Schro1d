@@ -25,6 +25,8 @@ private slots:
     void on_runButton_clicked();
     void on_saveButton_clicked();
     void on_loadButton_clicked();
+    void on_filenameText_editingFinished();
+    void testrun();
 
 private:
     Ui::MainWindow *ui;
