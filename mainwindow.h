@@ -7,6 +7,8 @@
 #include <QPlainTextEdit>
 #include <QTextBrowser>
 #include <QLineEdit>
+
+#include "mesh.h"
 //#include <map>
 
 namespace Ui {
@@ -38,6 +40,10 @@ private:
     QLabel * inputLabel;
     QPlainTextEdit * inputText;
     QLineEdit * filenameText;
+
+    Mesh mesh;
+
+    void build_form();
 
 };
 

@@ -20,13 +20,15 @@ HEADERS += \
     lapacke_config.h \
     lapacke_mangling.h \
     matrix.h \
-    schro_pois.h
+    schro_pois.h \
+    mesh.h
 
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
     matrix.cpp \
-    schro_pois.cpp
+    schro_pois.cpp \
+    mesh.cpp
 
 unix:!macx: CONFIG += qt debug
 

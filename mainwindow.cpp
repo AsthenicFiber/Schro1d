@@ -1,8 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QString>
-#include <QStringList>
-#include "string.h"
+#include <string>
 #include <fstream>
 
 //if visual c++
@@ -19,37 +18,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-
-    runButton = new QPushButton("Run",this);
-    runButton->setGeometry(QRect(QPoint(450,320),QSize(75,23)));
-    connect(runButton, SIGNAL(clicked()), this, SLOT(on_runButton_clicked()));
-
-    saveButton = new QPushButton("Save",this);
-    saveButton->setGeometry(QRect(QPoint(450,240),QSize(75,23)));
-    connect(saveButton, SIGNAL(clicked()), this, SLOT(on_saveButton_clicked()));
-
-    loadButton = new QPushButton("Load",this);
-    loadButton->setGeometry(QRect(QPoint(450,280),QSize(75,23)));
-    connect(loadButton, SIGNAL(clicked()), this, SLOT(on_loadButton_clicked()));
-
-    inputText = new QPlainTextEdit(this);
-    inputText->setGeometry(10,50,411,261);
-
-    inputLabel = new QLabel(this);
-    inputLabel->setText("Input Text");
-    inputLabel->setGeometry(10,30,411,13);
-
-    outputText = new QTextBrowser(this);
-    outputText->setGeometry(10,350,411,241);
-
-    outputLabel = new QLabel(this);
-    outputLabel->setText("Output");
-    outputLabel->setGeometry(10,330,411,13);
-
-    filenameText = new QLineEdit(this);
-    filenameText->setGeometry(450,200,120,20);
-    filenameText->setPlaceholderText(QString("Filename"));
-    connect(filenameText, SIGNAL(editingFinished()), this, SLOT(on_filenameText_editingFinished()));
+    build_form();
 }
 
 MainWindow::~MainWindow()
@@ -114,25 +83,8 @@ QString print_mat(int *A, int rows, int cols)
 void MainWindow::on_runButton_clicked()
 {
     // Parse input text
-    QStringList in_text = inputText->toPlainText().split('\n',QString::SkipEmptyParts);
-
-    for (int i = 0; i < in_text.length(); i++)
-    {
-        // Parse each line
-        QString command = in_text[i].section(' ',0,0);
-        if (command == "Layer")
-        {
-            outputText->append(in_text[i].section(' ',1,-1));
-        }
-        else if (command == "Contact")
-        {
-            outputText->append(in_text[i].section(' ',1,-1));
-        }
-        else
-        {
-            outputText->append(in_text[i]);
-        }
-    }
+    QString in_text = inputText->toPlainText();
+    outputText->append(mesh.parse_input(in_text));
 
     // Run calculation
 }
@@ -169,8 +121,6 @@ void MainWindow::testrun()
     LAPACKE_dsyev(LAPACK_ROW_MAJOR,'V','U',n,A.mat(),lda,B.mat());
 
     //outputText->append(print_mat(ipiv,2,1));
-    //outputText->append(print_mat(A.mat(),2,2));
-    //outputText->append(print_mat(B.mat(),2,1));
     //outputText->append(print_mat(Avec));
     outputText->append(print_mat(B));
     outputText->append(print_mat(A));
@@ -197,12 +147,17 @@ void MainWindow::on_saveButton_clicked()
 {
     std::string filenm = filenameText->text().toStdString();
     //filenm.append(".txt");
+    if (filenm == "" || filenm == ".txt")
+    {
+        outputText->append("Enter Filename");
+        return;
+    }
 
     std::ofstream  outfile;
     outfile.open(filenm, std::ifstream::out | std::ofstream::trunc);
     if (outfile.is_open())
     {
-        outputText->append("File Opened");
+        outputText->append("Saving File");
         //char buffer[1000];
         //buffer = inputText->toPlainText().toLatin1().data();
         int len = inputText->toPlainText().size();
@@ -210,7 +165,7 @@ void MainWindow::on_saveButton_clicked()
     }
     else
     {
-        outputText->append("Error Openning File");
+        outputText->append("Error Saving File");
     }
     outfile.close();
 }
@@ -250,4 +205,38 @@ void MainWindow::on_filenameText_editingFinished()
         filenm.append(".txt");
     }
     filenameText->setText(filenm);
+}
+
+void MainWindow::build_form()
+{
+    runButton = new QPushButton("Run",this);
+    runButton->setGeometry(QRect(QPoint(450,320),QSize(75,23)));
+    connect(runButton, SIGNAL(clicked()), this, SLOT(on_runButton_clicked()));
+
+    saveButton = new QPushButton("Save",this);
+    saveButton->setGeometry(QRect(QPoint(450,240),QSize(75,23)));
+    connect(saveButton, SIGNAL(clicked()), this, SLOT(on_saveButton_clicked()));
+
+    loadButton = new QPushButton("Load",this);
+    loadButton->setGeometry(QRect(QPoint(450,280),QSize(75,23)));
+    connect(loadButton, SIGNAL(clicked()), this, SLOT(on_loadButton_clicked()));
+
+    inputText = new QPlainTextEdit(this);
+    inputText->setGeometry(10,50,411,261);
+
+    inputLabel = new QLabel(this);
+    inputLabel->setText("Input Text");
+    inputLabel->setGeometry(10,30,411,13);
+
+    outputText = new QTextBrowser(this);
+    outputText->setGeometry(10,350,411,241);
+
+    outputLabel = new QLabel(this);
+    outputLabel->setText("Output");
+    outputLabel->setGeometry(10,330,411,13);
+
+    filenameText = new QLineEdit(this);
+    filenameText->setGeometry(450,200,120,20);
+    filenameText->setPlaceholderText(QString("Filename"));
+    connect(filenameText, SIGNAL(editingFinished()), this, SLOT(on_filenameText_editingFinished()));
 }
