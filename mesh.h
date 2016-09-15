@@ -4,6 +4,7 @@
 #include <QString>
 #include <QStringList>
 #include <vector>
+#include <map>
 #include "matrix.h"
 
 
@@ -18,17 +19,17 @@ struct LayerDopant
 {
     double N,dN,ddN;
     double E,dE,ddE;
-    int type;
+    char type;
 };
 
 struct Layer
 {
     QString material;
-    double d;
+    int d;
     double X,dX,ddX;
     double Efn,dEfn,ddEfn;
     double Efp,dEfp,ddEfp;
-    std::vector <LayerDopant> layerdoping;
+    std::map <QString,LayerDopant> layerdoping;
 };
 
 QString parse_error(int line, int parameter);

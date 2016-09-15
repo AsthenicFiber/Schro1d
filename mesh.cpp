@@ -15,12 +15,11 @@ QString Mesh::parse_input(QString in_text)
     {
         // Parse each line
         QString command = in_text_list[i].section(' ',0,0);
-        if (command == "Layer")
+        if (QString("layer").startsWith(command.toLower()))
         {
             // search for parameters
             Layer layer;
             layer.material = in_text_list[i].section(' ',1,1);
-            layers.push_back(layer);
 
             QStringList params = in_text_list[i].split(' ',QString::SkipEmptyParts);
             for (int j = 2; j < params.length(); j++)
@@ -38,11 +37,127 @@ QString Mesh::parse_input(QString in_text)
                 {
                     return parse_error(i+1,j-2);
                 }
+
+                // Store data
+                if (param == "d")
+                {
+                    layer.d = val.toInt();
+                }
+                else if (param == "X")
+                {
+                    layer.X = val.toDouble();
+                }
+                else if (param == "dX")
+                {
+                    layer.dX = val.toDouble();
+                }
+                else if (param == "ddX")
+                {
+                    layer.ddX = val.toDouble();
+                }
+                else if (param == "Efn")
+                {
+                    layer.Efn = val.toDouble();
+                }
+                else if (param == "dEfn")
+                {
+                    layer.dEfn = val.toDouble();
+                }
+                else if (param == "ddEfn")
+                {
+                    layer.ddEfn = val.toDouble();
+                }
+                else if (param == "Efp")
+                {
+                    layer.Efp = val.toDouble();
+                }
+                else if (param == "dEfp")
+                {
+                    layer.dEfp = val.toDouble();
+                }
+                else if (param == "ddEfp")
+                {
+                    layer.ddEfp = val.toDouble();
+                }
+                else if (param.startsWith("Ed"))
+                {
+                    QString dope_index = param.remove(0,2);
+                    layer.layerdoping[dope_index].E = val.toDouble();
+                    layer.layerdoping[dope_index].type = 'n';
+                }
+                else if (param.startsWith("dEd"))
+                {
+                    QString dope_index = param.remove(0,3);
+                    layer.layerdoping[dope_index].dE = val.toDouble();
+                    layer.layerdoping[dope_index].type = 'n';
+                }
+                else if (param.startsWith("ddEd"))
+                {
+                    QString dope_index = param.remove(0,4);
+                    layer.layerdoping[dope_index].ddE = val.toDouble();
+                    layer.layerdoping[dope_index].type = 'n';
+                }
+                else if (param.startsWith("Nd"))
+                {
+                    QString dope_index = param.remove(0,2);
+                    layer.layerdoping[dope_index].N = val.toDouble();
+                    layer.layerdoping[dope_index].type = 'n';
+                }
+                else if (param.startsWith("dNd"))
+                {
+                    QString dope_index = param.remove(0,3);
+                    layer.layerdoping[dope_index].dN = val.toDouble();
+                    layer.layerdoping[dope_index].type = 'n';
+                }
+                else if (param.startsWith("ddNd"))
+                {
+                    QString dope_index = param.remove(0,4);
+                    layer.layerdoping[dope_index].ddN = val.toDouble();
+                    layer.layerdoping[dope_index].type = 'n';
+                }
+                else if (param.startsWith("Ea"))
+                {
+                    QString dope_index = param.remove(0,2);
+                    layer.layerdoping[dope_index].E = val.toDouble();
+                    layer.layerdoping[dope_index].type = 'p';
+                }
+                else if (param.startsWith("dEa"))
+                {
+                    QString dope_index = param.remove(0,3);
+                    layer.layerdoping[dope_index].dE = val.toDouble();
+                    layer.layerdoping[dope_index].type = 'p';
+                }
+                else if (param.startsWith("ddEa"))
+                {
+                    QString dope_index = param.remove(0,4);
+                    layer.layerdoping[dope_index].ddE = val.toDouble();
+                    layer.layerdoping[dope_index].type = 'p';
+                }
+                else if (param.startsWith("Na"))
+                {
+                    QString dope_index = param.remove(0,2);
+                    layer.layerdoping[dope_index].N = val.toDouble();
+                    layer.layerdoping[dope_index].type = 'p';
+                }
+                else if (param.startsWith("dNa"))
+                {
+                    QString dope_index = param.remove(0,3);
+                    layer.layerdoping[dope_index].dN = val.toDouble();
+                    layer.layerdoping[dope_index].type = 'p';
+                }
+                else if (param.startsWith("ddNa"))
+                {
+                    QString dope_index = param.remove(0,4);
+                    layer.layerdoping[dope_index].ddN = val.toDouble();
+                    layer.layerdoping[dope_index].type = 'p';
+                }
             }
+
+            layers.push_back(layer);
 
             out_text.append(in_text_list[i].section(' ',1,-1));
         }
-        else if (command == "Contact")
+        else if (QString("contact").startsWith(command.toLower()))
         {
             out_text.append(in_text_list[i].section(' ',1,-1));
         }
