@@ -151,6 +151,10 @@ QString Mesh::parse_input(QString in_text)
                     layer.layerdoping[dope_index].ddN = val.toDouble();
                     layer.layerdoping[dope_index].type = 'p';
                 }
+                else
+                {
+                    return parse_error(i+1,j-2);
+                }
             }
 
             layers.push_back(layer);
@@ -173,4 +177,40 @@ QString Mesh::parse_input(QString in_text)
 QString parse_error(int line, int parameter)
 {
     return QString("Error Parsing Line %1, Parameter %2").arg(line).arg(parameter);
+}
+
+QString Mesh::generate()
+{
+    length = 0;
+
+    for (unsigned int i = 0; i < layers.size(); i++)
+    {
+        length = length + layers[i].d;
+    }
+
+    Efn = Matrix(length,1);
+    Efp = Matrix(length,1);
+    Eg = Matrix(length,1);
+    Ec = Matrix(length,1);
+    eps = Matrix(length,1);
+    me = Matrix(length,1);
+    mh = Matrix(length,1);
+
+    int x = 0;
+    for (unsigned int i = 0; i < layers.size(); i++)
+    {
+        int x_min = x;
+        int x_max = x + layers[i].d;
+        while (x < x_max)
+        {
+            Efn[x][0] = layers[i].Efn;
+            Efn[x][0] += layers[i].dEfn*double(x-x_min);
+            Efn[x][0] += layers[i].ddEfn*double(x-x_min)*double(x-x_min)/2;
+            Efp[x][0] = layers[i].Efp;
+            Efp[x][0] += layers[i].dEfp*double(x-x_min);
+            Efp[x][0] += layers[i].ddEfp*double(x-x_min)*double(x-x_min)/2;
+            x++;
+        }
+    }
+    return "Mesh Generated";
 }
