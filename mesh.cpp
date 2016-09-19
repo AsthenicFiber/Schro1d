@@ -55,6 +55,26 @@ QString Mesh::parse_input(QString in_text)
                 {
                     layer.ddX = val.toDouble();
                 }
+                else if (param == "ternX")
+                {
+                    layer.ternX = val;
+                }
+                else if (param == "Y")
+                {
+                    layer.Y = val.toDouble();
+                }
+                else if (param == "dY")
+                {
+                    layer.dY = val.toDouble();
+                }
+                else if (param == "ddY")
+                {
+                    layer.ddY = val.toDouble();
+                }
+                else if (param == "ternY")
+                {
+                    layer.ternY = val;
+                }
                 else if (param == "Efn")
                 {
                     layer.Efn = val.toDouble();
@@ -177,6 +197,11 @@ QString Mesh::parse_input(QString in_text)
 QString parse_error(int line, int parameter)
 {
     return QString("Error Parsing Line %1, Parameter %2").arg(line).arg(parameter);
+}
+
+bool Mesh::read_matfile()
+{
+    return matdata.load();
 }
 
 QString Mesh::generate()

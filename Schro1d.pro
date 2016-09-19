@@ -21,14 +21,16 @@ HEADERS += \
     lapacke_mangling.h \
     matrix.h \
     schro_pois.h \
-    mesh.h
+    mesh.h \
+    materialsdata.h
 
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
     matrix.cpp \
     schro_pois.cpp \
-    mesh.cpp
+    mesh.cpp \
+    materialsdata.cpp
 
 unix:!macx: CONFIG += qt debug
 

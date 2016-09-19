@@ -85,6 +85,7 @@ void MainWindow::on_runButton_clicked()
     // Parse input text
     QString in_text = inputText->toPlainText();
     outputText->append(mesh.parse_input(in_text));
+    mesh.read_matfile();
     outputText->append(mesh.generate());
     outputText->append(print_mat(mesh.Efn));
 

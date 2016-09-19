@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include "matrix.h"
+#include "materialsdata.h"
 
 struct Dopant
 {
@@ -28,10 +29,12 @@ struct Layer
     QString material;
     int d;
     double X,dX,ddX;
+    double Y,dY,ddY;
     double Efn,dEfn,ddEfn;
     double Efp,dEfp,ddEfp;
+    QString ternX,ternY;
     std::map <QString,LayerDopant> layerdoping;
-    Layer():d(0),X(0),dX(0),ddX(0),Efn(0),dEfn(0),ddEfn(0),Efp(0),dEfp(0),ddEfp(0){}
+    Layer():d(0),ternX(0),ternY(0),X(0),dX(0),ddX(0),Y(0),dY(0),ddY(0),Efn(0),dEfn(0),ddEfn(0),Efp(0),dEfp(0),ddEfp(0){}
 };
 
 QString parse_error(int line, int parameter);
@@ -41,6 +44,7 @@ class Mesh
 public:
     Mesh();
     QString parse_input(QString in_text);
+    bool read_matfile();
     QString generate();
 
 public:
@@ -64,6 +68,7 @@ private:
     Matrix Ep;
     Matrix En;
     int length;
+    MaterialsData matdata;
 };
 
 #endif // MESH_H
