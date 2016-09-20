@@ -39,6 +39,7 @@ class MaterialsData
 public:
     MaterialsData();
     bool load();
+    Material operator [](QString name);
 
 private:
     std::map <QString,Material> materialdata;

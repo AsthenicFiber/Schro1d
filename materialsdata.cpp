@@ -92,4 +92,25 @@ Material::Material(Material A, Material B, double X)
     mu_p = A.mu_p*(1-X) + B.mu_p*X;
     tau_n = A.tau_n*(1-X) + B.tau_n*X;
     tau_p = A.tau_p*(1-X) + B.tau_p*X;
+    for (std::map<QString,double>::iterator it = A.bowing.begin(); it != A.bowing.end(); ++it)
+    {
+        bowing[it->first] = it->second;
+    }
+    for (std::map<QString,double>::iterator it = B.bowing.begin(); it != B.bowing.end(); ++it)
+    {
+        if (bowing.count(it->first))
+        {
+            bowing[it->first] = it->second*X + bowing[it->first]*(1-X);
+        }
+        else
+        {
+            bowing[it->first] = it->second;
+        }
+    }
+}
+
+Material MaterialsData::operator [] (QString name)
+{
+    return materialdata[name];
+    //return &p[row*n];
 }

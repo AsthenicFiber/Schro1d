@@ -32,9 +32,9 @@ struct Layer
     double Y,dY,ddY;
     double Efn,dEfn,ddEfn;
     double Efp,dEfp,ddEfp;
-    QString ternX,ternY;
+    QString ternX,ternY = "";
     std::map <QString,LayerDopant> layerdoping;
-    Layer():d(0),ternX(0),ternY(0),X(0),dX(0),ddX(0),Y(0),dY(0),ddY(0),Efn(0),dEfn(0),ddEfn(0),Efp(0),dEfp(0),ddEfp(0){}
+    Layer():d(0),X(0),dX(0),ddX(0),Y(0),dY(0),ddY(0),Efn(0),dEfn(0),ddEfn(0),Efp(0),dEfp(0),ddEfp(0){}
 };
 
 QString parse_error(int line, int parameter);
@@ -50,12 +50,12 @@ public:
 public:
     Matrix Efn;
     Matrix Efp;
+    Matrix Eg;
 
 private:
     std::vector <Layer> layers;
     Matrix psip;
     Matrix psin;
-    Matrix Eg;
     Matrix Ec;
     Matrix Q;
     std::vector <Dopant> doping;
@@ -67,6 +67,7 @@ private:
     Matrix mh;
     Matrix Ep;
     Matrix En;
+    Matrix pol;
     int length;
     MaterialsData matdata;
 };

@@ -220,6 +220,7 @@ QString Mesh::generate()
     eps = Matrix(length,1);
     me = Matrix(length,1);
     mh = Matrix(length,1);
+    pol = Matrix(length,1);
 
     int x = 0;
     for (unsigned int i = 0; i < layers.size(); i++)
@@ -228,12 +229,45 @@ QString Mesh::generate()
         int x_max = x + layers[i].d;
         while (x < x_max)
         {
+            Material matx;
+
+            if (layers[i].ternY != "" && layers[i].ternX != "")
+            {
+                // find quaternary
+                double X = layers[i].X + layers[i].dX*double(x-x_min) + layers[i].ddX*double(x-x_min)*double(x-x_min)/2;
+                double Y = layers[i].Y + layers[i].dY*double(x-x_min) + layers[i].ddY*double(x-x_min)*double(x-x_min)/2;
+                matx = Material(matdata[layers[i].material],matdata[layers[i].ternX],X/(1-Y));
+                matx = Material(matx,matdata[layers[i].ternY],Y);
+            }
+            else if (layers[i].ternX != "")
+            {
+                // find ternary
+                double X = layers[i].X + layers[i].dX*double(x-x_min) + layers[i].ddX*double(x-x_min)*double(x-x_min)/2;
+                matx = Material(matdata[layers[i].material],matdata[layers[i].ternX],X);
+            }
+            else
+            {
+                // return semiconductor
+                matx = matdata[layers[i].material];
+            }
+
             Efn[x][0] = layers[i].Efn;
             Efn[x][0] += layers[i].dEfn*double(x-x_min);
             Efn[x][0] += layers[i].ddEfn*double(x-x_min)*double(x-x_min)/2;
             Efp[x][0] = layers[i].Efp;
             Efp[x][0] += layers[i].dEfp*double(x-x_min);
             Efp[x][0] += layers[i].ddEfp*double(x-x_min)*double(x-x_min)/2;
+
+            Eg[x][0] = matx.Eg;
+            Ec[x][0] = matx.chi;
+            eps[x][0] = matx.eps;
+            me[x][0] = matx.m_e;
+            mh[x][0] = matx.m_lh + matx.m_hh;
+            if (matx.Psp != 0)
+            {
+                pol[x][0] = matx.Psp + 2*(3.191 - matx.a)/matx.a*(matx.e31-matx.e33*matx.c13/matx.c33);
+            }
+
             x++;
         }
     }

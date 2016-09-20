@@ -88,6 +88,7 @@ void MainWindow::on_runButton_clicked()
     mesh.read_matfile();
     outputText->append(mesh.generate());
     outputText->append(print_mat(mesh.Efn));
+    outputText->append(print_mat(mesh.Eg));
 
     // Run calculation
 }
