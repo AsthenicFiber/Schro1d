@@ -51,6 +51,7 @@ public:
     Matrix Efn;
     Matrix Efp;
     Matrix Eg;
+    Matrix pol;
 
 private:
     std::vector <Layer> layers;
@@ -67,7 +68,6 @@ private:
     Matrix mh;
     Matrix Ep;
     Matrix En;
-    Matrix pol;
     int length;
     MaterialsData matdata;
 };

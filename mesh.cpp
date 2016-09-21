@@ -19,9 +19,9 @@ QString Mesh::parse_input(QString in_text)
         {
             // search for parameters
             Layer layer;
-            layer.material = in_text_list[i].section(' ',1,1);
+            layer.material = in_text_list[i].section(QRegExp("[\\t ]"),1,1);
 
-            QStringList params = in_text_list[i].split(' ',QString::SkipEmptyParts);
+            QStringList params = in_text_list[i].split(QRegExp("[\\t ]"),QString::SkipEmptyParts);
             for (int j = 2; j < params.length(); j++)
             {
                 //check if contains '='
@@ -221,6 +221,7 @@ QString Mesh::generate()
     me = Matrix(length,1);
     mh = Matrix(length,1);
     pol = Matrix(length,1);
+    Matrix pol_ = Matrix(length,1);
 
     int x = 0;
     for (unsigned int i = 0; i < layers.size(); i++)
@@ -265,7 +266,19 @@ QString Mesh::generate()
             mh[x][0] = matx.m_lh + matx.m_hh;
             if (matx.Psp != 0)
             {
-                pol[x][0] = matx.Psp + 2*(3.191 - matx.a)/matx.a*(matx.e31-matx.e33*matx.c13/matx.c33);
+                pol_[x][0] = matx.Psp + 2*(3.191 - matx.a)/matx.a*(matx.e31-matx.e33*matx.c13/matx.c33);
+                if (x == 0)
+                {
+                    pol[x][0] = pol_[x][0];
+                }
+                else if (x == x_min)
+                {
+                    pol[x][0] = pol_[x][0]-pol_[x-1][0];
+                }
+                else if (x == length-1)
+                {
+                    pol[x][0] = -pol_[x][0];
+                }
             }
 
             x++;

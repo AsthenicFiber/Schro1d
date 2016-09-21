@@ -22,7 +22,8 @@ HEADERS += \
     matrix.h \
     schro_pois.h \
     mesh.h \
-    materialsdata.h
+    materialsdata.h \
+    highlighter.h
 
 SOURCES += \
     main.cpp \
@@ -30,7 +31,8 @@ SOURCES += \
     matrix.cpp \
     schro_pois.cpp \
     mesh.cpp \
-    materialsdata.cpp
+    materialsdata.cpp \
+    highlighter.cpp
 
 unix:!macx: CONFIG += qt debug
 

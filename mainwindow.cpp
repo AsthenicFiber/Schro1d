@@ -89,6 +89,7 @@ void MainWindow::on_runButton_clicked()
     outputText->append(mesh.generate());
     outputText->append(print_mat(mesh.Efn));
     outputText->append(print_mat(mesh.Eg));
+    outputText->append(print_mat(mesh.pol));
 
     // Run calculation
 }
@@ -227,6 +228,12 @@ void MainWindow::build_form()
 
     inputText = new QPlainTextEdit(this);
     inputText->setGeometry(10,50,411,261);
+    QFont font;
+    font.setFamily("Courier");
+    font.setFixedPitch(true);
+    font.setPointSize(10);
+    inputText->setFont(font);
+    highlighter = new Highlighter(inputText->document());
 
     inputLabel = new QLabel(this);
     inputLabel->setText("Input Text");

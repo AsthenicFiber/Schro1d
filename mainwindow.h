@@ -9,6 +9,7 @@
 #include <QLineEdit>
 
 #include "mesh.h"
+#include "highlighter.h"
 //#include <map>
 
 namespace Ui {
@@ -40,6 +41,8 @@ private:
     QLabel * inputLabel;
     QPlainTextEdit * inputText;
     QLineEdit * filenameText;
+
+    Highlighter *highlighter;
 
     Mesh mesh;
 
