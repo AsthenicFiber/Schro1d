@@ -2,19 +2,20 @@
 
 #include <fstream>
 #include <QStringList>
+#include <string>
 
 MaterialsData::MaterialsData()
 {
 
 }
 
-bool MaterialsData::load()
+QString MaterialsData::load(QString matfilenm)
 {
     std::fstream matfile;
-    matfile.open("materials.csv",std::ifstream::in);
+    matfile.open(matfilenm.toStdString(),std::ifstream::in);
     if (!matfile.is_open())
     {
-        return false;
+        return "Could not open materials file.\n";
     }
     QString mattext;
     while (!matfile.eof())
@@ -64,7 +65,12 @@ bool MaterialsData::load()
         }
     }
 
-    return true;
+    return "Materials File Loaded\n";
+}
+
+QString MaterialsData::load()
+{
+    return load("materials.csv");
 }
 
 Material::Material(Material A, Material B, double X)

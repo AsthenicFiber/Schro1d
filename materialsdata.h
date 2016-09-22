@@ -38,7 +38,8 @@ class MaterialsData
 {
 public:
     MaterialsData();
-    bool load();
+    QString load(QString matfilenm);
+    QString load();
     Material operator [](QString name);
 
 private:

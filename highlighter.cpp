@@ -9,6 +9,7 @@ Highlighter::Highlighter(QTextDocument *parent) : QSyntaxHighlighter(parent)
     QStringList keywordPatterns;
     keywordPatterns << "^([lL]([aA]([yY]([eE][rR]?)?)?)?)\\b"
                     << "^([cC]([oO]([nN]([tT]([aA]([cC][tT]?)?)?)?)?)?)\\b"
+                    << "^([mM]([aA]([tT]([fF]([iI]([lL][eE]?)?)?)?)?)?)\\b"
                     << "^([tT]([eE]([mM][pP]?)?)?)\\b";
     foreach (const QString &pattern, keywordPatterns)
     {

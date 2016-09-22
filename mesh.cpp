@@ -10,6 +10,7 @@ QString Mesh::parse_input(QString in_text)
     QStringList in_text_list = in_text.split('\n',QString::SkipEmptyParts);
     QString out_text = "";
     layers.clear();
+    matfile = "materials.csv";
 
     for (int i = 0; i < in_text_list.length(); i++)
     {
@@ -179,11 +180,16 @@ QString Mesh::parse_input(QString in_text)
 
             layers.push_back(layer);
 
-            out_text.append(in_text_list[i].section(' ',1,-1));
+            out_text.append(in_text_list[i].section(QRegExp("[\\t ]"),1,-1));
         }
         else if (QString("contact").startsWith(command.toLower()))
         {
-            out_text.append(in_text_list[i].section(' ',1,-1));
+            out_text.append(in_text_list[i].section(QRegExp("[\\t ]"),1,-1));
+        }
+        else if (QString("matfile").startsWith(command.toLower()))
+        {
+            out_text.append(in_text_list[i].section(QRegExp("[\\t ]"),1,-1));
+            matfile = in_text_list[i].section(QRegExp("[\\t ]"),1,1);
         }
         else
         {
@@ -199,9 +205,9 @@ QString parse_error(int line, int parameter)
     return QString("Error Parsing Line %1, Parameter %2").arg(line).arg(parameter);
 }
 
-bool Mesh::read_matfile()
+QString Mesh::read_matfile()
 {
-    return matdata.load();
+    return matdata.load(matfile);
 }
 
 QString Mesh::generate()
@@ -222,6 +228,14 @@ QString Mesh::generate()
     mh = Matrix(length,1);
     pol = Matrix(length,1);
     Matrix pol_ = Matrix(length,1);
+
+    psip = Matrix(length,1);
+    psin = Matrix(length,1);
+    Ec = Matrix(length,1);
+    Q = Matrix(length,1);
+    V = Matrix(length,1);
+    Up = Matrix(length,1);
+    Un = Matrix(length,1);
 
     int x = 0;
     for (unsigned int i = 0; i < layers.size(); i++)
@@ -259,11 +273,14 @@ QString Mesh::generate()
             Efp[x][0] += layers[i].dEfp*double(x-x_min);
             Efp[x][0] += layers[i].ddEfp*double(x-x_min)*double(x-x_min)/2;
 
+            Efn *= -1;
+            Efp *= -1;
+
             Eg[x][0] = matx.Eg;
-            Ec[x][0] = matx.chi;
+            Ec[x][0] = -matx.chi;
             eps[x][0] = matx.eps;
             me[x][0] = matx.m_e;
-            mh[x][0] = matx.m_lh + matx.m_hh;
+            mh[x][0] = pow((pow(matx.m_lh,3/2) + pow(matx.m_hh,3/2)),2/3);
             if (matx.Psp != 0)
             {
                 pol_[x][0] = matx.Psp + 2*(3.191 - matx.a)/matx.a*(matx.e31-matx.e33*matx.c13/matx.c33);
@@ -285,4 +302,85 @@ QString Mesh::generate()
         }
     }
     return "Mesh Generated";
+}
+
+void Mesh::calc_potentials()
+{
+    double q = 1.602e-19;
+    //double Evac = 0;
+    Un = V*-q + (Ec*-1)*-1;
+    Up = V*q + (Ec*-1) + Eg;
+}
+
+void Mesh::calc_charges()
+{
+    //double q = 1.602e-19;
+
+    //Matrix rho = -1*sum_over_En((Efn + -1*Ec)*psin(En)*psin(En)) + sum_over_Ep((Ec + Eg + -1*Efp)*psin(En)*psin(En));
+    Matrix rho = Matrix(length,1);
+    Q = rho + pol;
+
+    // Add ionized dopants to charge profile
+    for (unsigned int i = 0; i < doping.size(); i++)
+    {
+        if (doping[i].type == 'n')
+        {
+            Q += Nd_ion(doping[i].E,doping[i].N);
+        }
+        else if (doping[i].type == 'p')
+        {
+            Q += Na_ion(doping[i].E,doping[i].N)*-1;
+        }
+    }
+}
+
+Matrix Mesh::Nd_ion(Matrix Ed, Matrix Nd)
+{
+    double kT = 0.26; //eV
+    Matrix Nd_i = Matrix(length,1);
+    for (int i = 0; i < length; i++)
+    {
+        Nd_i[i][0] = Nd[i][0]/(1 + 2*exp((Efn[i][0] - Ed[i][0])/kT));
+    }
+    return Nd;
+}
+
+Matrix Mesh::Na_ion(Matrix Ea, Matrix Na)
+{
+    double kT = 0.26; //eV
+    Matrix Na_i = Matrix(length,1);
+    for (int i = 0; i < length; i++)
+    {
+        Na_i[i][0] = Na[i][0]/(1 + 4*exp((Ea[i][0] - Efp[i][0])/kT));
+    }
+    return Na_i;
+}
+
+Matrix Mesh::n_boltz()
+{
+    double kT = 0.26; //eV
+    double h = 4.13567e-15; //eV*s
+    Matrix n = Matrix(length,1);
+    for (int i = 0; i < length; i++)
+    {
+        double Nc = 2*pow(2*3.14159*me[i][0]*kT/(h*h),3/2);
+        // non-degenerate
+        n[i][0] = Nc*exp(-(Ec[i][0] - Efn[i][0])/kT);
+    }
+    return n;
+}
+
+Matrix Mesh::p_boltz()
+{
+    double kT = 0.26; //eV
+    double h = 4.13567e-15; //eV*s
+    Matrix p = Matrix(length,1);
+    Matrix Ev = Ec + Eg*-1;
+    for (int i = 0; i < length; i++)
+    {
+        double Nv = 2*pow(2*3.14159*mh[i][0]*kT/(h*h),3/2);
+        // non-degenerate
+        p[i][0] = Nv*exp(-(Efn[i][0] - Ev[i][0])/kT);
+    }
+    return p;
 }

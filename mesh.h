@@ -7,6 +7,8 @@
 #include <map>
 #include "matrix.h"
 #include "materialsdata.h"
+#include "lapacke.h"
+#include "schro_pois.h"
 
 struct Dopant
 {
@@ -44,8 +46,10 @@ class Mesh
 public:
     Mesh();
     QString parse_input(QString in_text);
-    bool read_matfile();
+    QString read_matfile();
     QString generate();
+    void calc_potentials();
+    void calc_charges();
 
 public:
     Matrix Efn;
@@ -70,6 +74,13 @@ private:
     Matrix En;
     int length;
     MaterialsData matdata;
+    QString matfile;
+
+    Matrix Nd_ion(Matrix Ed, Matrix Nd);
+    Matrix Na_ion(Matrix Ea, Matrix Na);
+
+    Matrix n_boltz();
+    Matrix p_boltz();
 };
 
 #endif // MESH_H

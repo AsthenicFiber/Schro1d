@@ -4,10 +4,10 @@
 #include <string>
 #include <fstream>
 
-//if visual c++
-#include <complex>
-#define lapack_complex_float std::complex<float>
-#define lapack_complex_double std::complex<double>
+//if visual studio c++
+//#include <complex>
+//#define lapack_complex_float std::complex<float>
+//#define lapack_complex_double std::complex<double>
 
 #include "lapacke.h"
 #include "matrix.h"
@@ -82,10 +82,13 @@ QString print_mat(int *A, int rows, int cols)
 
 void MainWindow::on_runButton_clicked()
 {
+    // Clear mesh
+    mesh = Mesh();
+
     // Parse input text
     QString in_text = inputText->toPlainText();
     outputText->append(mesh.parse_input(in_text));
-    mesh.read_matfile();
+    outputText->append(mesh.read_matfile());
     outputText->append(mesh.generate());
     outputText->append(print_mat(mesh.Efn));
     outputText->append(print_mat(mesh.Eg));
