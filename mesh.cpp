@@ -249,15 +249,16 @@ QString Mesh::generate()
             if (layers[i].ternY != "" && layers[i].ternX != "")
             {
                 // find quaternary
-                double X = layers[i].X + layers[i].dX*double(x-x_min) + layers[i].ddX*double(x-x_min)*double(x-x_min)/2;
-                double Y = layers[i].Y + layers[i].dY*double(x-x_min) + layers[i].ddY*double(x-x_min)*double(x-x_min)/2;
+                double X = d2val(layers[i].X, layers[i].dX, layers[i].ddX, x-x_min);
+                double Y = d2val(layers[i].Y, layers[i].dY, layers[i].ddY, x-x_min);
+
                 matx = Material(matdata[layers[i].material],matdata[layers[i].ternX],X/(1-Y));
                 matx = Material(matx,matdata[layers[i].ternY],Y);
             }
             else if (layers[i].ternX != "")
             {
                 // find ternary
-                double X = layers[i].X + layers[i].dX*double(x-x_min) + layers[i].ddX*double(x-x_min)*double(x-x_min)/2;
+                double X = d2val(layers[i].X, layers[i].dX, layers[i].ddX, x-x_min);
                 matx = Material(matdata[layers[i].material],matdata[layers[i].ternX],X);
             }
             else
@@ -266,15 +267,8 @@ QString Mesh::generate()
                 matx = matdata[layers[i].material];
             }
 
-            Efn[x][0] = layers[i].Efn;
-            Efn[x][0] += layers[i].dEfn*double(x-x_min);
-            Efn[x][0] += layers[i].ddEfn*double(x-x_min)*double(x-x_min)/2;
-            Efp[x][0] = layers[i].Efp;
-            Efp[x][0] += layers[i].dEfp*double(x-x_min);
-            Efp[x][0] += layers[i].ddEfp*double(x-x_min)*double(x-x_min)/2;
-
-            Efn *= -1;
-            Efp *= -1;
+            Efn[x][0] = -d2val(layers[i].Efn, layers[i].dEfn, layers[i].ddEfn,x-x_min);
+            Efp[x][0] = -d2val(layers[i].Efp, layers[i].dEfp, layers[i].ddEfp,x-x_min);
 
             Eg[x][0] = matx.Eg;
             Ec[x][0] = -matx.chi;
@@ -283,7 +277,8 @@ QString Mesh::generate()
             mh[x][0] = pow((pow(matx.m_lh,3/2) + pow(matx.m_hh,3/2)),2/3);
             if (matx.Psp != 0)
             {
-                pol_[x][0] = matx.Psp + 2*(3.191 - matx.a)/matx.a*(matx.e31-matx.e33*matx.c13/matx.c33);
+                // change to have a different sub-layer than GaN
+                pol_[x][0] = matx.Psp + 2*(3.191-matx.a)/matx.a*(matx.e31-matx.e33*matx.c13/matx.c33);
                 if (x == 0)
                 {
                     pol[x][0] = pol_[x][0];
@@ -297,7 +292,6 @@ QString Mesh::generate()
                     pol[x][0] = -pol_[x][0];
                 }
             }
-
             x++;
         }
     }
@@ -306,7 +300,8 @@ QString Mesh::generate()
 
 void Mesh::calc_potentials()
 {
-    double q = 1.602e-19;
+    //double q = 1.602e-19; // coulumbs
+    double q = 1; // electrons
     //double Evac = 0;
     Un = V*-q + (Ec*-1)*-1;
     Up = V*q + (Ec*-1) + Eg;
@@ -316,8 +311,8 @@ void Mesh::calc_charges()
 {
     //double q = 1.602e-19;
 
-    //Matrix rho = -1*sum_over_En((Efn + -1*Ec)*psin(En)*psin(En)) + sum_over_Ep((Ec + Eg + -1*Efp)*psin(En)*psin(En));
-    Matrix rho = Matrix(length,1);
+    norm_psi();
+    Matrix rho = n_psi()*-1 + p_psi();
     Q = rho + pol;
 
     // Add ionized dopants to charge profile
@@ -380,7 +375,154 @@ Matrix Mesh::p_boltz()
     {
         double Nv = 2*pow(2*3.14159*mh[i][0]*kT/(h*h),3/2);
         // non-degenerate
-        p[i][0] = Nv*exp(-(Efn[i][0] - Ev[i][0])/kT);
+        p[i][0] = Nv*exp(-(Efp[i][0] - Ev[i][0])/kT);
     }
     return p;
+}
+
+Matrix Mesh::n_psi()
+{
+    double kT = 0.26; //eV
+    Matrix n(length,1);
+
+    // Find maximum bounded energy
+    double E_max = max_bound(Un);
+
+    for (int i = 0; i < length; i++)
+    {
+        if (En[i][0] >= E_max)
+        {
+            break;
+        }
+
+        // Find energy level occupancy and concentration over x
+        Matrix n_E(length,1);
+        for (int j = 0; j < length; j++)
+        {
+            double F;
+            F = 1/(1 + exp((En[i][0] - Efn[j][0])/kT));
+            n_E[j][0] = F*psin[j][i]*psin[j][i];
+        }
+
+        // Add to total carriers
+        n = n + n_E;
+    }
+    return n;
+}
+
+Matrix Mesh::p_psi()
+{
+    double kT = 0.26; //eV
+    Matrix p(length,1);
+
+    // Find maximum bounded energy
+    double E_max = max_bound(Up);
+
+    for (int i = 0; i < length; i++)
+    {
+        if (Ep[i][0] >= E_max)
+        {
+            break;
+        }
+
+        // Find energy level occupancy and concentration over x
+        Matrix p_E(length,1);
+        for (int j = 0; j < length; j++)
+        {
+            double F;
+            F = 1/(1 + exp((Ep[i][0] - Efp[j][0])/kT));
+            p_E[j][0] = F*psip[j][i]*psip[j][i];
+        }
+
+        // Add to total carriers
+        p = p + p_E;
+    }
+    return p;
+}
+
+double d2val(double a, double da, double dda, double x)
+{
+    return a + da*x + dda*x*x/2;
+}
+
+double max(Matrix A)
+{
+    return max(A, 0, A.rows());
+}
+
+double max(Matrix A, int start, int end)
+{
+    double max = A[start][0];
+    for (int i = start; i < end; i++)
+    {
+        if (A[i][0] > max)
+        {
+            max = A[i][0];
+        }
+    }
+    return max;
+}
+
+double min(Matrix A)
+{
+    return min(A, 0, A.rows());
+}
+
+double min(Matrix A, int start, int end)
+{
+    double min = A[start][0];
+    for (int i = start; i < end; i++)
+    {
+        if (A[i][0] > min)
+        {
+            min = A[i][0];
+        }
+    }
+    return min;
+}
+
+double max_bound(Matrix A)
+{
+    double min_A = A[1][0];
+    int min_in = 1;
+    for (int i = 0; i < A.rows(); i++)
+    {
+        if (A[i][0] < min_A)
+        {
+            min_A = A[i][0];
+            min_in = i;
+        }
+    }
+    double E_max1 = max(A,0,min_in);
+    double E_max2 = max(A,min_in,A.rows());
+    if (E_max2 > E_max1)
+    {
+        return E_max1;
+    }
+    else
+    {
+        return E_max2;
+    }
+}
+
+void Mesh::norm_psi()
+{
+    for (int i = 1; i < length; i++)
+    {
+        // Normalize psi[:][i]
+        double sumn = 0;
+        double sump = 0;
+        for (int j = 1; j < length; j++)
+        {
+            sumn += psin[j][i]*psin[j][i];
+            sump += psip[j][i]*psip[j][i];
+        }
+        double normn = sqrt(sumn);
+        double normp = sqrt(sump);
+        for (int j = 1; j < length; j++)
+        {
+            psin[j][i] = psin[j][i]/normn;
+            psip[j][i] = psip[j][i]/normp;
+        }
+    }
 }

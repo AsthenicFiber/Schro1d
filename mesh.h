@@ -41,6 +41,15 @@ struct Layer
 
 QString parse_error(int line, int parameter);
 
+double d2val(double a, double da, double dda, double x);
+
+double max(Matrix A);
+double max(Matrix A, int start, int end);
+double min(Matrix A);
+double min(Matrix A, int start, int end);
+
+double max_bound(Matrix A);
+
 class Mesh
 {
 public:
@@ -81,6 +90,10 @@ private:
 
     Matrix n_boltz();
     Matrix p_boltz();
+
+    void norm_psi();
+    Matrix n_psi();
+    Matrix p_psi();
 };
 
 #endif // MESH_H
