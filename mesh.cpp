@@ -213,10 +213,12 @@ QString Mesh::read_matfile()
 QString Mesh::generate()
 {
     length = 0;
-
+    int max_dopants = 0;
     for (unsigned int i = 0; i < layers.size(); i++)
     {
         length = length + layers[i].d;
+        if (layers[i].layerdoping.size() > max_dopants)
+            max_dopants = layers[i].layerdoping.size();
     }
 
     Efn = Matrix(length,1);
@@ -228,6 +230,7 @@ QString Mesh::generate()
     mh = Matrix(length,1);
     pol = Matrix(length,1);
     Matrix pol_ = Matrix(length,1);
+    doping.resize(max_dopants*2);
 
     psip = Matrix(length,1);
     psin = Matrix(length,1);
@@ -267,11 +270,12 @@ QString Mesh::generate()
                 matx = matdata[layers[i].material];
             }
 
-            Efn[x][0] = -d2val(layers[i].Efn, layers[i].dEfn, layers[i].ddEfn,x-x_min);
-            Efp[x][0] = -d2val(layers[i].Efp, layers[i].dEfp, layers[i].ddEfp,x-x_min);
-
             Eg[x][0] = matx.Eg;
             Ec[x][0] = -matx.chi;
+
+            Efn[x][0] = -d2val(layers[i].Efn, layers[i].dEfn, layers[i].ddEfn,x-x_min) + Ec + Eg*.5;
+            Efp[x][0] = -d2val(layers[i].Efp, layers[i].dEfp, layers[i].ddEfp,x-x_min) + Ec + Eg*.5;
+
             eps[x][0] = matx.eps;
             me[x][0] = matx.m_e;
             mh[x][0] = pow((pow(matx.m_lh,3/2) + pow(matx.m_hh,3/2)),2/3);
@@ -292,7 +296,44 @@ QString Mesh::generate()
                     pol[x][0] = -pol_[x][0];
                 }
             }
+            std::map<QString,LayerDopant>::iterator it = layers[i].layerdoping.begin();
+            int N_dop = 0;
+            while (it != layers[i].layerdoping.end())
+            {
+                double N_ = layers[i].layerdoping[it].N;
+                double dN_ = layers[i].layerdoping[it].dN;
+                double ddN_ = layers[i].layerdoping[it].ddN;
+                double E_ = layers[i].layerdoping[it].E;
+                double dE_ = layers[i].layerdoping[it].dE;
+                double ddE_ = layers[i].layerdoping[it].ddE;
+
+                if (layers[i].layerdoping[it].type == 'n')
+                {
+                    doping[N_dop].N[x] = d2val(N_,dN_,ddN_,x-x_min);
+                    doping[N_dop].E[x] = d2val(E_,dE_,ddE_,x-x_min);
+                    doping[N_dop].type = 'n';
+                }
+                else if (layers[i].layerdoping[it].type == 'p')
+                {
+                    doping[N_dop + max_dopants].N[x] = d2val(N_,dN_,ddN_,x-x_min);
+                    doping[N_dop + max_dopants].E[x] = d2val(E_,dE_,ddE_,x-x_min);
+                    doping[N_dop + max_dopants].type = 'p';
+                }
+                N_dop++;
+                ++it;
+            }
             x++;
+        }
+    }
+    for (unsigned int i = 0; i < doping.size(); i++)
+    {
+        if (doping[i].type == 'n')
+        {
+            doping[i].E = doping[i].E*-1 + Ec; // negative value relative to Evac
+        }
+        else if (doping[i].type == 'p')
+        {
+            doping[i].E = doping[i].E + Ec + Eg*-1; // negative value relative to Evac
         }
     }
     return "Mesh Generated";
@@ -303,7 +344,7 @@ void Mesh::calc_potentials()
     //double q = 1.602e-19; // coulumbs
     double q = 1; // electrons
     //double Evac = 0;
-    Un = V*-q + (Ec*-1)*-1;
+    Un = V*-q + Ec;
     Up = V*q + (Ec*-1) + Eg;
 }
 

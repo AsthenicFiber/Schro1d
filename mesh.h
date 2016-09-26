@@ -14,7 +14,7 @@ struct Dopant
 {
     Matrix N;
     Matrix E;
-    int type;
+    char type;
     Dopant():type('i'){}
 };
 
