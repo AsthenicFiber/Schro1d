@@ -3,6 +3,9 @@
 
 #include "matrix.h"
 
+#define DX 3.3e-19 // dx in c*s
+#define PI 3.14159 // dx in c*s
+
 //void solve_sp(Matrix dEc, Matrix eps, Matrix m, Matrix Q, Matrix E);
 
 void poiss_solve(Matrix Q, Matrix eps, Matrix *V);

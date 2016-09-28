@@ -4,24 +4,27 @@
 
 // Functions for Schrodinger Poisson solver
 
-/*
-void solve_sp(Matrix dEc, Matrix eps, Matrix m, Matrix Q, Matrix E)
-{
-    Matrix D = diff2_n(m.rows());
-    dEc = vec2diag(dEc);
-    eps = vec2diag(eps);
-    m = vec2diag(m);
-}
-*/
-
 void poiss_solve(Matrix Q, Matrix eps, Matrix* V)
 {
     Matrix A = diff2_n(Q.rows());
+    double coef = 1/(DX*DX); // dx in c*s
+    A = A*coef;
+    Q *= 1e-8*DX; // e/(cm^2*c*s)
     Matrix B(eps.rows(),1);
     for (int x = 0; x < eps.rows(); x++)
     {
         B[x][0] = Q[x][0]/eps[x][0];
     }
+
+    // set up boundary conditions
+    // top contact V = 0
+    A[0][0] = 1;
+    A[0][1] = 0;
+    B[0][0] = 0;
+    // bottom contact dV/dx = 0
+    A[A.rows()][A.rows()-1] = -1;
+    A[A.rows()][A.rows()] = 1;
+    B[A.rows()][0] = 0;
 
     int n = A.rows();
     int nrhs = B.cols();
@@ -29,7 +32,8 @@ void poiss_solve(Matrix Q, Matrix eps, Matrix* V)
     int ldb = B.cols();
     int* ipiv = new int[A.rows()];
 
-    LAPACKE_dgesv(LAPACK_ROW_MAJOR,n,nrhs,A.mat(),lda,ipiv,B.mat(),ldb);
+    int info = LAPACKE_dgesv(LAPACK_ROW_MAJOR,n,nrhs,A.mat(),lda,ipiv,B.mat(),ldb);
+    info += 0;
 
     *V = B;
     delete [] ipiv;
@@ -39,14 +43,17 @@ void poiss_solve(Matrix Q, Matrix eps, Matrix* V)
 void schro_solve(Matrix U, Matrix m, Matrix* psi, Matrix* E)
 {
     Matrix m_inv(m.rows(),m.rows());
-    double hbar = 6.58212e-16;
+    double hbar = 6.58212e-16; // eV*s
+    m = m*5.11e5; // eV/c^2 electron masses
 
     for (int x = 0; x < m.rows(); x++)
     {
         m_inv[x][x] = 1/m[x][0];
     }
 
-    Matrix A = m_inv*diff2_n(U.rows())*(-hbar*hbar/2) + vec2diag(U);
+    double coef = hbar*hbar/(2*DX*DX); // hbar^2/(2*dx^2), dx in c*s
+
+    Matrix A = m_inv*diff2_n(U.rows())*coef + vec2diag(U);
     A = (A + transpose(A))*.5;
 
     Matrix B(A.rows(),1);
@@ -55,6 +62,7 @@ void schro_solve(Matrix U, Matrix m, Matrix* psi, Matrix* E)
     int lda = A.cols();
 
     int info = LAPACKE_dsyev(LAPACK_ROW_MAJOR,'V','U',n,A.mat(),lda,B.mat());
+    info += 0;
 
     *psi = A;
     *E = B;

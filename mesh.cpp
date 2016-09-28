@@ -249,10 +249,10 @@ QString Mesh::generate()
 
             Efn[x][0] = -d2val(layers[i].Efn, layers[i].dEfn, layers[i].ddEfn,x-x_min);
             Efp[x][0] = -d2val(layers[i].Efp, layers[i].dEfp, layers[i].ddEfp,x-x_min);
-            Efn[x][0] += Ec[x][0] + Eg[x][0]/2;
-            Efp[x][0] += Ec[x][0] + Eg[x][0]/2;
+            Efn[x][0] += Ec[x][0] - Eg[x][0]/2;
+            Efp[x][0] += Ec[x][0] - Eg[x][0]/2;
 
-            eps[x][0] = matx.eps;
+            eps[x][0] = matx.eps*1.656758e16; // e/c*s*V
             me[x][0] = matx.m_e;
             mh[x][0] = pow((pow(matx.m_lh,3/2) + pow(matx.m_hh,3/2)),2/3);
             if (matx.Psp != 0)
@@ -274,6 +274,7 @@ QString Mesh::generate()
             }
             std::map<QString,LayerDopant>::iterator it = layers[i].layerdoping.begin();
             int N_dop = 0;
+            double dop_conc = 0;
             while (it != layers[i].layerdoping.end())
             {
                 double N_ = it->second.N;
@@ -288,15 +289,35 @@ QString Mesh::generate()
                     doping[N_dop].N[x][0] = d2val(N_,dN_,ddN_,x-x_min);
                     doping[N_dop].E[x][0] = d2val(E_,dE_,ddE_,x-x_min);
                     doping[N_dop].type = 'n';
+                    dop_conc += doping[N_dop].N[x][0];
                 }
                 else if (it->second.type == 'p')
                 {
                     doping[N_dop + max_dopants].N[x][0] = d2val(N_,dN_,ddN_,x-x_min);
                     doping[N_dop + max_dopants].E[x][0] = d2val(E_,dE_,ddE_,x-x_min);
                     doping[N_dop + max_dopants].type = 'p';
+                    dop_conc -= doping[N_dop].N[x][0];
                 }
                 N_dop++;
                 ++it;
+            }
+            double kT = .026; // eV
+            double h = 4.13567e-15; //eV*s
+            double ni = 2*pow(sqrt(me[x][0]*mh[x][0])*2*PI*kT/(h*h),3/2);
+            if (dop_conc > 0)
+            {
+                Efn[x][0] += kT*log(dop_conc/ni);
+                Efp[x][0] += kT*log(dop_conc/ni);
+            }
+            else if (dop_conc < 0)
+            {
+                Efn[x][0] -= kT*log(-dop_conc/ni);
+                Efp[x][0] -= kT*log(-dop_conc/ni);
+            }
+            else
+            {
+                Efn[x][0] += 3*kT/4*log(mh[x][0]/me[x][0]);
+                Efp[x][0] += 3*kT/4*log(mh[x][0]/me[x][0]);
             }
             x++;
         }
@@ -328,9 +349,9 @@ void Mesh::calc_charges()
 {
     //double q = 1.602e-19;
 
-    norm_psi();
+    //norm_psi();
     Matrix rho = n_psi()*-1 + p_psi();
-    Q = rho + pol;
+    Q = rho + pol; // e/(cm^3)
 
     // Add ionized dopants to charge profile
     for (unsigned int i = 0; i < doping.size(); i++)
@@ -348,29 +369,29 @@ void Mesh::calc_charges()
 
 Matrix Mesh::Nd_ion(Matrix Ed, Matrix Nd)
 {
-    double kT = 0.26; //eV
+    double kT = 0.026; //eV
     Matrix Nd_i = Matrix(length,1);
     for (int i = 0; i < length; i++)
     {
-        Nd_i[i][0] = Nd[i][0]/(1 + 2*exp((Efn[i][0] - Ed[i][0])/kT));
+        Nd_i[i][0] = Nd[i][0]/(1 + 2*exp((Efn[i][0] - Ed[i][0])/kT)); // e/(cm^3)
     }
-    return Nd;
+    return Nd_i;
 }
 
 Matrix Mesh::Na_ion(Matrix Ea, Matrix Na)
 {
-    double kT = 0.26; //eV
+    double kT = 0.026; //eV
     Matrix Na_i = Matrix(length,1);
     for (int i = 0; i < length; i++)
     {
-        Na_i[i][0] = Na[i][0]/(1 + 4*exp((Ea[i][0] - Efp[i][0])/kT));
+        Na_i[i][0] = Na[i][0]/(1 + 4*exp((Ea[i][0] - Efp[i][0])/kT)); // e/(cm^3)
     }
     return Na_i;
 }
 
 Matrix Mesh::n_boltz()
 {
-    double kT = 0.26; //eV
+    double kT = 0.026; //eV
     double h = 4.13567e-15; //eV*s
     Matrix n = Matrix(length,1);
     for (int i = 0; i < length; i++)
@@ -384,7 +405,7 @@ Matrix Mesh::n_boltz()
 
 Matrix Mesh::p_boltz()
 {
-    double kT = 0.26; //eV
+    double kT = 0.026; //eV
     double h = 4.13567e-15; //eV*s
     Matrix p = Matrix(length,1);
     Matrix Ev = Ec + Eg*-1;
@@ -399,7 +420,7 @@ Matrix Mesh::p_boltz()
 
 Matrix Mesh::n_psi()
 {
-    double kT = 0.26; //eV
+    double kT = 0.026; //eV
     Matrix n(length,1);
 
     // Find maximum bounded energy
@@ -418,7 +439,7 @@ Matrix Mesh::n_psi()
         {
             double F;
             F = 1/(1 + exp((En[i][0] - Efn[j][0])/kT));
-            n_E[j][0] = F*psin[j][i]*psin[j][i];
+            n_E[j][0] = F*psin[j][i]*psin[j][i]*1e8; // e/(cm^3)
         }
 
         // Add to total carriers
@@ -429,7 +450,7 @@ Matrix Mesh::n_psi()
 
 Matrix Mesh::p_psi()
 {
-    double kT = 0.26; //eV
+    double kT = 0.026; //eV
     Matrix p(length,1);
 
     // Find maximum bounded energy
@@ -448,7 +469,7 @@ Matrix Mesh::p_psi()
         {
             double F;
             F = 1/(1 + exp((Ep[i][0] - Efp[j][0])/kT));
-            p_E[j][0] = F*psip[j][i]*psip[j][i];
+            p_E[j][0] = F*psip[j][i]*psip[j][i]*1e8; // e/(cm^3)
         }
 
         // Add to total carriers

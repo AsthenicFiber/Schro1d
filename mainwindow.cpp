@@ -91,16 +91,16 @@ void MainWindow::on_runButton_clicked()
     outputText->append(mesh.read_matfile());
     outputText->append(mesh.generate());
     outputText->append(print_mat(mesh.Ec));
+    outputText->append(print_mat(mesh.Efn));
+    outputText->append(print_mat(mesh.Ec + mesh.Eg*-1));
     mesh.calc_potentials();
-    outputText->append(print_mat(mesh.psin));
-    outputText->append(print_mat(mesh.En));
     mesh.schro();
-    outputText->append(print_mat(mesh.psin));
-    outputText->append(print_mat(mesh.En));
-    outputText->append(print_mat(mesh.psip));
-    outputText->append(print_mat(mesh.Ep));
     mesh.calc_charges();
+    outputText->append(print_mat(mesh.n_psi()));
+    outputText->append(print_mat(mesh.Q + mesh.n_psi() + mesh.p_psi()*-1));
     outputText->append(print_mat(mesh.Q));
+    mesh.poiss();
+    outputText->append(print_mat(mesh.V));
 
     // Run calculation
 }
