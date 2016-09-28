@@ -30,7 +30,6 @@ QString Mesh::parse_input(QString in_text)
                 {
                     return parse_error(i+1,j-2);
                 }
-
                 QString param = params[j].section('=',0,0);
                 QString val = params[j].section('=',1,1);
                 // check values are not empty
@@ -38,68 +37,37 @@ QString Mesh::parse_input(QString in_text)
                 {
                     return parse_error(i+1,j-2);
                 }
-
                 // Store data
                 if (param == "d")
-                {
                     layer.d = val.toInt();
-                }
                 else if (param == "X")
-                {
                     layer.X = val.toDouble();
-                }
                 else if (param == "dX")
-                {
                     layer.dX = val.toDouble();
-                }
                 else if (param == "ddX")
-                {
                     layer.ddX = val.toDouble();
-                }
                 else if (param == "ternX")
-                {
                     layer.ternX = val;
-                }
                 else if (param == "Y")
-                {
                     layer.Y = val.toDouble();
-                }
                 else if (param == "dY")
-                {
                     layer.dY = val.toDouble();
-                }
                 else if (param == "ddY")
-                {
                     layer.ddY = val.toDouble();
-                }
                 else if (param == "ternY")
-                {
                     layer.ternY = val;
-                }
                 else if (param == "Efn")
-                {
                     layer.Efn = val.toDouble();
-                }
                 else if (param == "dEfn")
-                {
                     layer.dEfn = val.toDouble();
-                }
                 else if (param == "ddEfn")
-                {
                     layer.ddEfn = val.toDouble();
-                }
                 else if (param == "Efp")
-                {
                     layer.Efp = val.toDouble();
-                }
                 else if (param == "dEfp")
-                {
                     layer.dEfp = val.toDouble();
-                }
                 else if (param == "ddEfp")
-                {
                     layer.ddEfp = val.toDouble();
-                }
                 else if (param.startsWith("Ed"))
                 {
                     QString dope_index = param.remove(0,2);
@@ -213,7 +181,7 @@ QString Mesh::read_matfile()
 QString Mesh::generate()
 {
     length = 0;
-    int max_dopants = 0;
+    unsigned int max_dopants = 0;
     for (unsigned int i = 0; i < layers.size(); i++)
     {
         length = length + layers[i].d;
@@ -230,15 +198,21 @@ QString Mesh::generate()
     mh = Matrix(length,1);
     pol = Matrix(length,1);
     Matrix pol_ = Matrix(length,1);
-    doping.resize(max_dopants*2);
 
-    psip = Matrix(length,1);
-    psin = Matrix(length,1);
+    Dopant new_dopant;
+    new_dopant.E = Matrix(length,1);
+    new_dopant.N = Matrix(length,1);
+    doping.resize(max_dopants*2, new_dopant);
+
+    psip = Matrix(length,length);
+    psin = Matrix(length,length);
     Ec = Matrix(length,1);
     Q = Matrix(length,1);
     V = Matrix(length,1);
     Up = Matrix(length,1);
     Un = Matrix(length,1);
+    Ep = Matrix(length,1);
+    En = Matrix(length,1);
 
     int x = 0;
     for (unsigned int i = 0; i < layers.size(); i++)
@@ -273,8 +247,10 @@ QString Mesh::generate()
             Eg[x][0] = matx.Eg;
             Ec[x][0] = -matx.chi;
 
-            Efn[x][0] = -d2val(layers[i].Efn, layers[i].dEfn, layers[i].ddEfn,x-x_min) + Ec + Eg*.5;
-            Efp[x][0] = -d2val(layers[i].Efp, layers[i].dEfp, layers[i].ddEfp,x-x_min) + Ec + Eg*.5;
+            Efn[x][0] = -d2val(layers[i].Efn, layers[i].dEfn, layers[i].ddEfn,x-x_min);
+            Efp[x][0] = -d2val(layers[i].Efp, layers[i].dEfp, layers[i].ddEfp,x-x_min);
+            Efn[x][0] += Ec[x][0] + Eg[x][0]/2;
+            Efp[x][0] += Ec[x][0] + Eg[x][0]/2;
 
             eps[x][0] = matx.eps;
             me[x][0] = matx.m_e;
@@ -300,23 +276,23 @@ QString Mesh::generate()
             int N_dop = 0;
             while (it != layers[i].layerdoping.end())
             {
-                double N_ = layers[i].layerdoping[it].N;
-                double dN_ = layers[i].layerdoping[it].dN;
-                double ddN_ = layers[i].layerdoping[it].ddN;
-                double E_ = layers[i].layerdoping[it].E;
-                double dE_ = layers[i].layerdoping[it].dE;
-                double ddE_ = layers[i].layerdoping[it].ddE;
+                double N_ = it->second.N;
+                double dN_ = it->second.dN;
+                double ddN_ = it->second.ddN;
+                double E_ = it->second.E;
+                double dE_ = it->second.dE;
+                double ddE_ = it->second.ddE;
 
-                if (layers[i].layerdoping[it].type == 'n')
+                if (it->second.type == 'n')
                 {
-                    doping[N_dop].N[x] = d2val(N_,dN_,ddN_,x-x_min);
-                    doping[N_dop].E[x] = d2val(E_,dE_,ddE_,x-x_min);
+                    doping[N_dop].N[x][0] = d2val(N_,dN_,ddN_,x-x_min);
+                    doping[N_dop].E[x][0] = d2val(E_,dE_,ddE_,x-x_min);
                     doping[N_dop].type = 'n';
                 }
-                else if (layers[i].layerdoping[it].type == 'p')
+                else if (it->second.type == 'p')
                 {
-                    doping[N_dop + max_dopants].N[x] = d2val(N_,dN_,ddN_,x-x_min);
-                    doping[N_dop + max_dopants].E[x] = d2val(E_,dE_,ddE_,x-x_min);
+                    doping[N_dop + max_dopants].N[x][0] = d2val(N_,dN_,ddN_,x-x_min);
+                    doping[N_dop + max_dopants].E[x][0] = d2val(E_,dE_,ddE_,x-x_min);
                     doping[N_dop + max_dopants].type = 'p';
                 }
                 N_dop++;
@@ -486,66 +462,6 @@ double d2val(double a, double da, double dda, double x)
     return a + da*x + dda*x*x/2;
 }
 
-double max(Matrix A)
-{
-    return max(A, 0, A.rows());
-}
-
-double max(Matrix A, int start, int end)
-{
-    double max = A[start][0];
-    for (int i = start; i < end; i++)
-    {
-        if (A[i][0] > max)
-        {
-            max = A[i][0];
-        }
-    }
-    return max;
-}
-
-double min(Matrix A)
-{
-    return min(A, 0, A.rows());
-}
-
-double min(Matrix A, int start, int end)
-{
-    double min = A[start][0];
-    for (int i = start; i < end; i++)
-    {
-        if (A[i][0] > min)
-        {
-            min = A[i][0];
-        }
-    }
-    return min;
-}
-
-double max_bound(Matrix A)
-{
-    double min_A = A[1][0];
-    int min_in = 1;
-    for (int i = 0; i < A.rows(); i++)
-    {
-        if (A[i][0] < min_A)
-        {
-            min_A = A[i][0];
-            min_in = i;
-        }
-    }
-    double E_max1 = max(A,0,min_in);
-    double E_max2 = max(A,min_in,A.rows());
-    if (E_max2 > E_max1)
-    {
-        return E_max1;
-    }
-    else
-    {
-        return E_max2;
-    }
-}
-
 void Mesh::norm_psi()
 {
     for (int i = 1; i < length; i++)
@@ -566,4 +482,15 @@ void Mesh::norm_psi()
             psip[j][i] = psip[j][i]/normp;
         }
     }
+}
+
+void Mesh::poiss()
+{
+    poiss_solve(Q, eps, &V);
+}
+
+void Mesh::schro()
+{
+    schro_solve(Un, me, &psin, &En);
+    schro_solve(Up, mh, &psip, &Ep);
 }

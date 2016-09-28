@@ -43,13 +43,6 @@ QString parse_error(int line, int parameter);
 
 double d2val(double a, double da, double dda, double x);
 
-double max(Matrix A);
-double max(Matrix A, int start, int end);
-double min(Matrix A);
-double min(Matrix A, int start, int end);
-
-double max_bound(Matrix A);
-
 class Mesh
 {
 public:
@@ -66,7 +59,7 @@ public:
     Matrix Eg;
     Matrix pol;
 
-private:
+public:
     std::vector <Layer> layers;
     Matrix psip;
     Matrix psin;
@@ -94,6 +87,9 @@ private:
     void norm_psi();
     Matrix n_psi();
     Matrix p_psi();
+
+    void poiss();
+    void schro();
 };
 
 #endif // MESH_H
