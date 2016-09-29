@@ -15,6 +15,8 @@ Matrix diff2_n(int n);
 
 Matrix vec2diag(Matrix A);
 
+double sum(Matrix A);
+double sum(Matrix A, int start, int end);
 double max(Matrix A);
 double max(Matrix A, int start, int end);
 double min(Matrix A);

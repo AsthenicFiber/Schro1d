@@ -9,7 +9,7 @@ void poiss_solve(Matrix Q, Matrix eps, Matrix* V)
     Matrix A = diff2_n(Q.rows());
     double coef = 1/(DX*DX); // dx in c*s
     A = A*coef;
-    Q *= 1e-8*DX; // e/(cm^2*c*s)
+    Q *= 1e-8*1e-8*1e-8/(DX*DX*DX); // e/(c*s)^3
     Matrix B(eps.rows(),1);
     for (int x = 0; x < eps.rows(); x++)
     {
@@ -22,7 +22,11 @@ void poiss_solve(Matrix Q, Matrix eps, Matrix* V)
     A[0][1] = 0;
     B[0][0] = 0;
     // bottom contact dV/dx = 0
-    A[A.rows()][A.rows()-1] = -1;
+    //A[A.rows()][A.rows()-1] = -1;
+    //A[A.rows()][A.rows()] = 1;
+    //B[A.rows()][0] = 0;
+    // bottom contact V = 0
+    A[A.rows()][A.rows()-1] = 0;
     A[A.rows()][A.rows()] = 1;
     B[A.rows()][0] = 0;
 
@@ -101,6 +105,21 @@ Matrix vec2diag(Matrix A)
         //Matrix B(1,1);
     }
     return B;
+}
+
+double sum(Matrix A)
+{
+    return sum(A, 0, A.rows());
+}
+
+double sum(Matrix A, int start, int end)
+{
+    double s = 0;
+    for (int i = start; i < end; i++)
+    {
+        s += A[i][0];
+    }
+    return s;
 }
 
 double max(Matrix A)

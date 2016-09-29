@@ -101,6 +101,9 @@ void MainWindow::on_runButton_clicked()
     outputText->append(print_mat(mesh.Q));
     mesh.poiss();
     outputText->append(print_mat(mesh.V));
+    mesh.calc_potentials();
+    outputText->append(print_mat(mesh.Un));
+    outputText->append(print_mat(mesh.Up*-1));
 
     // Run calculation
 }

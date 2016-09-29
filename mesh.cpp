@@ -249,8 +249,8 @@ QString Mesh::generate()
 
             Efn[x][0] = -d2val(layers[i].Efn, layers[i].dEfn, layers[i].ddEfn,x-x_min);
             Efp[x][0] = -d2val(layers[i].Efp, layers[i].dEfp, layers[i].ddEfp,x-x_min);
-            Efn[x][0] += Ec[x][0] - Eg[x][0]/2;
-            Efp[x][0] += Ec[x][0] - Eg[x][0]/2;
+            //Efn[x][0] += Ec[x][0] - Eg[x][0]/2;
+            //Efp[x][0] += Ec[x][0] - Eg[x][0]/2;
 
             eps[x][0] = matx.eps*1.656758e16; // e/c*s*V
             me[x][0] = matx.m_e;
@@ -259,6 +259,7 @@ QString Mesh::generate()
             {
                 // change to have a different sub-layer than GaN
                 pol_[x][0] = matx.Psp + 2*(3.191-matx.a)/matx.a*(matx.e31-matx.e33*matx.c13/matx.c33);
+                pol_[x][0] *= 1/1.602e-19;
                 if (x == 0)
                 {
                     pol[x][0] = pol_[x][0];
@@ -301,23 +302,33 @@ QString Mesh::generate()
                 N_dop++;
                 ++it;
             }
-            double kT = .026; // eV
-            double h = 4.13567e-15; //eV*s
-            double ni = 2*pow(sqrt(me[x][0]*mh[x][0])*2*PI*kT/(h*h),3/2);
-            if (dop_conc > 0)
+            if (x == 0)
             {
-                Efn[x][0] += kT*log(dop_conc/ni);
-                Efp[x][0] += kT*log(dop_conc/ni);
-            }
-            else if (dop_conc < 0)
-            {
-                Efn[x][0] -= kT*log(-dop_conc/ni);
-                Efp[x][0] -= kT*log(-dop_conc/ni);
+                double kT = .026; // eV
+                double h = 4.13567e-15; //eV*s
+                double ni = 2*pow(sqrt(me[x][0]*mh[x][0])*2*PI*kT/(h*h),3/2);
+                Efn[x][0] += Ec[x][0] - Eg[x][0]/2;
+                Efp[x][0] += Ec[x][0] - Eg[x][0]/2;
+                if (dop_conc > 0)
+                {
+                    Efn[x][0] -= kT*log(dop_conc/ni);
+                    Efp[x][0] -= kT*log(dop_conc/ni);
+                }
+                else if (dop_conc < 0)
+                {
+                    Efn[x][0] += kT*log(-dop_conc/ni);
+                    Efp[x][0] += kT*log(-dop_conc/ni);
+                }
+                else
+                {
+                    Efn[x][0] += 3*kT/4*log(mh[x][0]/me[x][0]);
+                    Efp[x][0] += 3*kT/4*log(mh[x][0]/me[x][0]);
+                }
             }
             else
             {
-                Efn[x][0] += 3*kT/4*log(mh[x][0]/me[x][0]);
-                Efp[x][0] += 3*kT/4*log(mh[x][0]/me[x][0]);
+                Efn[x][0] += Efn[0][0] + layers[0].Efn;
+                Efp[x][0] += Efp[0][0] + layers[0].Efp;
             }
             x++;
         }
@@ -351,7 +362,7 @@ void Mesh::calc_charges()
 
     //norm_psi();
     Matrix rho = n_psi()*-1 + p_psi();
-    Q = rho + pol; // e/(cm^3)
+    Q = pol;
 
     // Add ionized dopants to charge profile
     for (unsigned int i = 0; i < doping.size(); i++)
@@ -365,6 +376,9 @@ void Mesh::calc_charges()
             Q += Na_ion(doping[i].E,doping[i].N)*-1;
         }
     }
+    Q += rho*(-sum(Q)/sum(rho)); // e/(cm^3)
+    double b = sum(Q);
+    b++;
 }
 
 Matrix Mesh::Nd_ion(Matrix Ed, Matrix Nd)
