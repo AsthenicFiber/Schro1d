@@ -7,7 +7,7 @@
 #include <map>
 #include "matrix.h"
 #include "materialsdata.h"
-#include "lapacke.h"
+//#include "lapacke.h"
 #include "schro_pois.h"
 
 struct Dopant
@@ -62,6 +62,7 @@ public:
 public:
     std::vector <Layer> layers;
     Matrix psip;
+    Matrix psiph;
     Matrix psin;
     Matrix Ec;
     Matrix Q;
@@ -71,12 +72,18 @@ public:
     Matrix Un;
     Matrix Up;
     Matrix me;
+    Matrix mlh;
+    Matrix mhh;
     Matrix mh;
     Matrix Ep;
+    Matrix Eph;
     Matrix En;
+    Matrix Qp;
+    Matrix Qn;
     int length;
     MaterialsData matdata;
     QString matfile;
+    double T;
 
     Matrix Nd_ion(Matrix Ed, Matrix Nd);
     Matrix Na_ion(Matrix Ea, Matrix Na);
@@ -87,6 +94,7 @@ public:
     void norm_psi();
     Matrix n_psi();
     Matrix p_psi();
+    Matrix ph_psi();
 
     void poiss();
     void schro();

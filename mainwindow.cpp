@@ -96,8 +96,8 @@ void MainWindow::on_runButton_clicked()
     mesh.calc_potentials();
     mesh.schro();
     mesh.calc_charges();
-    outputText->append(print_mat(mesh.n_psi()));
-    outputText->append(print_mat(mesh.Q + mesh.n_psi() + mesh.p_psi()*-1));
+    outputText->append(print_mat(mesh.Qn));
+    outputText->append(print_mat(mesh.Qp));
     outputText->append(print_mat(mesh.Q));
     mesh.poiss();
     outputText->append(print_mat(mesh.V));

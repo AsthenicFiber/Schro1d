@@ -1,4 +1,5 @@
 
+#include <math.h>
 #include "schro_pois.h"
 #include "lapacke.h"
 
@@ -48,7 +49,7 @@ void schro_solve(Matrix U, Matrix m, Matrix* psi, Matrix* E)
 {
     Matrix m_inv(m.rows(),m.rows());
     double hbar = 6.58212e-16; // eV*s
-    m = m*5.11e5; // eV/c^2 electron masses
+    //m = m*5.11e5; // eV/c^2 electron masses
 
     for (int x = 0; x < m.rows(); x++)
     {
@@ -193,4 +194,34 @@ Matrix transpose(Matrix A)
         }
     }
     return B;
+}
+
+Matrix q_psi(Matrix U, Matrix Ef, Matrix E, Matrix psi, double T)
+{
+    int length = Ef.rows();
+    double kT = kB*T; //eV
+    Matrix n(length,1);
+
+    // Find maximum bounded energy
+    double E_max = max_bound(U);
+
+    for (int i = 0; i < length; i++)
+    {
+        if (E[i][0] >= E_max)
+        {
+            break;
+        }
+
+        // Find energy level occupancy and concentration over x
+        Matrix n_E(length,1);
+        for (int j = 0; j < length; j++)
+        {
+            double F = 1/(1 + exp((E[i][0] - Ef[j][0])/kT));
+            n_E[j][0] = F*psi[j][i]*psi[j][i]*1e8; // e/(cm^3)
+        }
+
+        // Add to total carriers
+        n = n + n_E;
+    }
+    return n;
 }

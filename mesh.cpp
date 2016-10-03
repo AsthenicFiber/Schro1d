@@ -11,6 +11,7 @@ QString Mesh::parse_input(QString in_text)
     QString out_text = "";
     layers.clear();
     matfile = "materials.csv";
+    T = 300;
 
     for (int i = 0; i < in_text_list.length(); i++)
     {
@@ -159,6 +160,11 @@ QString Mesh::parse_input(QString in_text)
             out_text.append(in_text_list[i].section(QRegExp("[\\t ]"),1,-1));
             matfile = in_text_list[i].section(QRegExp("[\\t ]"),1,1);
         }
+        else if (QString("temp").startsWith(command.toLower()))
+        {
+            out_text.append(in_text_list[i].section(QRegExp("[\\t ]"),1,-1));
+            T = in_text_list[i].section(QRegExp("[\\t ]"),1,1).toDouble();
+        }
         else
         {
             out_text.append(in_text_list[i]);
@@ -195,6 +201,8 @@ QString Mesh::generate()
     Ec = Matrix(length,1);
     eps = Matrix(length,1);
     me = Matrix(length,1);
+    mlh = Matrix(length,1);
+    mhh = Matrix(length,1);
     mh = Matrix(length,1);
     pol = Matrix(length,1);
     Matrix pol_ = Matrix(length,1);
@@ -213,6 +221,8 @@ QString Mesh::generate()
     Un = Matrix(length,1);
     Ep = Matrix(length,1);
     En = Matrix(length,1);
+    Qp = Matrix(length,1);
+    Qn = Matrix(length,1);
 
     int x = 0;
     for (unsigned int i = 0; i < layers.size(); i++)
@@ -252,14 +262,16 @@ QString Mesh::generate()
             //Efn[x][0] += Ec[x][0] - Eg[x][0]/2;
             //Efp[x][0] += Ec[x][0] - Eg[x][0]/2;
 
-            eps[x][0] = matx.eps*1.656758e16; // e/c*s*V
-            me[x][0] = matx.m_e;
-            mh[x][0] = pow((pow(matx.m_lh,3/2) + pow(matx.m_hh,3/2)),2/3);
+            eps[x][0] = matx.eps*EPSo; // e/c*s*V
+            me[x][0] = matx.m_e*Me;
+            mlh[x][0] = matx.m_lh*Me;
+            mhh[x][0] = matx.m_hh*Me;
+            mh[x][0] = pow(double(pow(double(matx.m_lh),double(1.5)) + pow(double(matx.m_hh),double(1.5))),double(.6667))*Me;
             if (matx.Psp != 0)
             {
                 // change to have a different sub-layer than GaN
                 pol_[x][0] = matx.Psp + 2*(3.191-matx.a)/matx.a*(matx.e31-matx.e33*matx.c13/matx.c33);
-                pol_[x][0] *= 1/1.602e-19;
+                pol_[x][0] *= 1e4/Qe; // convert to e/cm^3 (e/cm^2 from C/m^2 then times 1/dx)
                 if (x == 0)
                 {
                     pol[x][0] = pol_[x][0];
@@ -304,20 +316,24 @@ QString Mesh::generate()
             }
             if (x == 0)
             {
-                double kT = .026; // eV
-                double h = 4.13567e-15; //eV*s
-                double ni = 2*pow(sqrt(me[x][0]*mh[x][0])*2*PI*kT/(h*h),3/2);
+                double kT = kB*T; // eV
+                double h = hP; //eV*s
+                double Nc = 2*pow(double(2*3.14159*me[i][0]*kT/(h*h)),double(1.5));
+                Nc *= DX*DX*DX*1e24; // convert to 1/cm^3
+                double Nv = 2*pow(double(2*3.14159*mh[i][0]*kT/(h*h)),double(1.5));
+                Nv *= DX*DX*DX*1e24; // convert to 1/cm^3
+                double ni = sqrt(Nc*Nv*exp(-Eg[x][0]/kT));
                 Efn[x][0] += Ec[x][0] - Eg[x][0]/2;
                 Efp[x][0] += Ec[x][0] - Eg[x][0]/2;
                 if (dop_conc > 0)
                 {
-                    Efn[x][0] -= kT*log(dop_conc/ni);
-                    Efp[x][0] -= kT*log(dop_conc/ni);
+                    Efn[x][0] += kT*log(dop_conc/ni);
+                    Efp[x][0] += kT*log(dop_conc/ni);
                 }
                 else if (dop_conc < 0)
                 {
-                    Efn[x][0] += kT*log(-dop_conc/ni);
-                    Efp[x][0] += kT*log(-dop_conc/ni);
+                    Efn[x][0] -= kT*log(-dop_conc/ni);
+                    Efp[x][0] -= kT*log(-dop_conc/ni);
                 }
                 else
                 {
@@ -358,10 +374,10 @@ void Mesh::calc_potentials()
 
 void Mesh::calc_charges()
 {
-    //double q = 1.602e-19;
-
-    //norm_psi();
-    Matrix rho = n_psi()*-1 + p_psi();
+    Qn = q_psi(Un,Efn,En,psin,T);
+    Qp = q_psi(Up,Efp,Ep,psip,T) + q_psi(Up,Efp,Eph,psiph,T);
+    Matrix rho = Qn + Qp;
+    //Matrix rho = n_psi()*-1 + p_psi() + ph_psi();
     Q = pol;
 
     // Add ionized dopants to charge profile
@@ -376,14 +392,14 @@ void Mesh::calc_charges()
             Q += Na_ion(doping[i].E,doping[i].N)*-1;
         }
     }
+    Qp *= (-sum(Q)/sum(rho)); // e/(cm^3)
+    Qn *= (-sum(Q)/sum(rho)); // e/(cm^3)
     Q += rho*(-sum(Q)/sum(rho)); // e/(cm^3)
-    double b = sum(Q);
-    b++;
 }
 
 Matrix Mesh::Nd_ion(Matrix Ed, Matrix Nd)
 {
-    double kT = 0.026; //eV
+    double kT = kB*T; //eV
     Matrix Nd_i = Matrix(length,1);
     for (int i = 0; i < length; i++)
     {
@@ -394,7 +410,7 @@ Matrix Mesh::Nd_ion(Matrix Ed, Matrix Nd)
 
 Matrix Mesh::Na_ion(Matrix Ea, Matrix Na)
 {
-    double kT = 0.026; //eV
+    double kT = kB*T; //eV
     Matrix Na_i = Matrix(length,1);
     for (int i = 0; i < length; i++)
     {
@@ -405,8 +421,8 @@ Matrix Mesh::Na_ion(Matrix Ea, Matrix Na)
 
 Matrix Mesh::n_boltz()
 {
-    double kT = 0.026; //eV
-    double h = 4.13567e-15; //eV*s
+    double kT = kB*T; //eV
+    double h = hP; //eV*s
     Matrix n = Matrix(length,1);
     for (int i = 0; i < length; i++)
     {
@@ -419,8 +435,8 @@ Matrix Mesh::n_boltz()
 
 Matrix Mesh::p_boltz()
 {
-    double kT = 0.026; //eV
-    double h = 4.13567e-15; //eV*s
+    double kT = kB*T; //eV
+    double h = hP; //eV*s
     Matrix p = Matrix(length,1);
     Matrix Ev = Ec + Eg*-1;
     for (int i = 0; i < length; i++)
@@ -434,7 +450,7 @@ Matrix Mesh::p_boltz()
 
 Matrix Mesh::n_psi()
 {
-    double kT = 0.026; //eV
+    double kT = kB*T; //eV
     Matrix n(length,1);
 
     // Find maximum bounded energy
@@ -464,7 +480,7 @@ Matrix Mesh::n_psi()
 
 Matrix Mesh::p_psi()
 {
-    double kT = 0.026; //eV
+    double kT = kB*T; //eV
     Matrix p(length,1);
 
     // Find maximum bounded energy
@@ -484,6 +500,36 @@ Matrix Mesh::p_psi()
             double F;
             F = 1/(1 + exp((Ep[i][0] - Efp[j][0])/kT));
             p_E[j][0] = F*psip[j][i]*psip[j][i]*1e8; // e/(cm^3)
+        }
+
+        // Add to total carriers
+        p = p + p_E;
+    }
+    return p;
+}
+
+Matrix Mesh::ph_psi()
+{
+    double kT = kB*T; //eV
+    Matrix p(length,1);
+
+    // Find maximum bounded energy
+    double E_max = max_bound(Up);
+
+    for (int i = 0; i < length; i++)
+    {
+        if (Eph[i][0] >= E_max)
+        {
+            break;
+        }
+
+        // Find energy level occupancy and concentration over x
+        Matrix p_E(length,1);
+        for (int j = 0; j < length; j++)
+        {
+            double F;
+            F = 1/(1 + exp((Eph[i][0] - Efp[j][0])/kT));
+            p_E[j][0] = F*psiph[j][i]*psiph[j][i]*1e8; // e/(cm^3)
         }
 
         // Add to total carriers
@@ -527,5 +573,6 @@ void Mesh::poiss()
 void Mesh::schro()
 {
     schro_solve(Un, me, &psin, &En);
-    schro_solve(Up, mh, &psip, &Ep);
+    schro_solve(Up, mlh, &psip, &Ep);
+    schro_solve(Up, mhh, &psiph, &Eph);
 }

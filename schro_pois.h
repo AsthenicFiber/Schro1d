@@ -3,8 +3,13 @@
 
 #include "matrix.h"
 
-#define DX 3.3e-19 // dx in c*s
-#define PI 3.14159 // dx in c*s
+#define DX 3.3356e-19 // dx in c*s
+#define PI 3.14159 // pi
+#define EPSo 1.656758e16 // vacuum permittivity in e/c*s*V
+#define Qe 1.602e-19 // electron charge
+#define hP 4.13567e-15 // eV*s
+#define kB 8.61733e-5 // eV/K
+#define Me 5.11e5 // electron mass in eV/c^2
 
 //void solve_sp(Matrix dEc, Matrix eps, Matrix m, Matrix Q, Matrix E);
 
@@ -25,5 +30,7 @@ double min(Matrix A, int start, int end);
 double max_bound(Matrix A);
 
 Matrix transpose(Matrix A);
+
+Matrix q_psi(Matrix U, Matrix Ef, Matrix E, Matrix psi, double T);
 
 #endif // SCHRO_POIS_H
