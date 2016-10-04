@@ -85,27 +85,24 @@ void MainWindow::on_runButton_clicked()
     // Clear mesh
     mesh = Mesh();
 
-    // Parse input text
+    // Parse input text and generate mesh
     QString in_text = inputText->toPlainText();
     outputText->append(mesh.parse_input(in_text));
     outputText->append(mesh.read_matfile());
     outputText->append(mesh.generate());
-    outputText->append(print_mat(mesh.Ec));
-    outputText->append(print_mat(mesh.Efn));
-    outputText->append(print_mat(mesh.Ec + mesh.Eg*-1));
-    mesh.calc_potentials();
-    mesh.schro();
-    mesh.calc_charges();
+
+    // Run calculation
+    mesh.solve_SP();
+
+    // Print and Plot results
     outputText->append(print_mat(mesh.Qn));
     outputText->append(print_mat(mesh.Qp));
     outputText->append(print_mat(mesh.Q));
-    mesh.poiss();
     outputText->append(print_mat(mesh.V));
-    mesh.calc_potentials();
     outputText->append(print_mat(mesh.Un));
+    outputText->append(print_mat(mesh.Efn));
     outputText->append(print_mat(mesh.Up*-1));
-
-    // Run calculation
+    outputText->append(print_mat(mesh.pol));
 }
 
 void MainWindow::testrun()

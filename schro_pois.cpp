@@ -227,3 +227,41 @@ Matrix q_psi(Matrix U, Matrix Ef, Matrix m, Matrix E, Matrix psi, double T)
     }
     return n;
 }
+
+Matrix q_boltz(Matrix U, Matrix Ef, Matrix m, double T)
+{
+    int length = Ef.rows();
+    double kT = kB*T; //eV
+    double h = hP; //eV*s
+    Matrix n = Matrix(length,1);
+    for (int i = 0; i < length; i++)
+    {
+        double Nc = 2*pow(double(2*PI*m[i][0]*kT/(h*h)),double(1.5));
+        Nc *= DX*DX*DX*1e24; // convert to 1/cm^3
+
+        if ((U[i][0] - Ef[i][0])/kT > 1) // non-degenerate
+        {
+            n[i][0] = Nc*exp(-(U[i][0] - Ef[i][0])/kT);
+        }
+        else // degenerate
+        {
+            n[i][0] = Nc*2*fermi_integral(-(U[i][0]-Ef[i][0])/kT)/sqrt(PI);
+        }
+    }
+    return n;
+}
+
+double fermi_integral(double E)
+{
+    double d_eta = 0.01;
+    double eta = d_eta;
+    double F = sqrt(eta)/(1+exp(eta-E));
+    double err = F;
+    while (err/F > 1e-5)
+    {
+        F += d_eta*sqrt(eta)/(1+exp(eta-E));
+        eta += d_eta;
+        err = d_eta*sqrt(eta)/(1+exp(eta-E));
+    }
+    return F;
+}

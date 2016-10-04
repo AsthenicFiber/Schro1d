@@ -7,7 +7,6 @@
 #include <map>
 #include "matrix.h"
 #include "materialsdata.h"
-//#include "lapacke.h"
 #include "schro_pois.h"
 
 struct Dopant
@@ -50,27 +49,28 @@ public:
     QString parse_input(QString in_text);
     QString read_matfile();
     QString generate();
-    void calc_potentials();
-    void calc_charges();
+    void solve_SP();
 
 public:
     Matrix Efn;
     Matrix Efp;
-    Matrix Eg;
+    Matrix V;
+    Matrix Un;
+    Matrix Up;
+    Matrix Qp;
+    Matrix Qn;
+    Matrix Q;
     Matrix pol;
 
-public:
+private:
     std::vector <Layer> layers;
     Matrix psip;
     Matrix psiph;
     Matrix psin;
     Matrix Ec;
-    Matrix Q;
+    Matrix Eg;
     std::vector <Dopant> doping;
     Matrix eps;
-    Matrix V;
-    Matrix Un;
-    Matrix Up;
     Matrix me;
     Matrix mlh;
     Matrix mhh;
@@ -78,26 +78,20 @@ public:
     Matrix Ep;
     Matrix Eph;
     Matrix En;
-    Matrix Qp;
-    Matrix Qn;
     int length;
     MaterialsData matdata;
     QString matfile;
     double T;
+    bool schrodinger;
 
     Matrix Nd_ion(Matrix Ed, Matrix Nd);
     Matrix Na_ion(Matrix Ea, Matrix Na);
 
-    Matrix n_boltz();
-    Matrix p_boltz();
-
-    void norm_psi();
-    Matrix n_psi();
-    Matrix p_psi();
-    Matrix ph_psi();
-
+    //void norm_psi();
     void poiss();
     void schro();
+    void calc_potentials();
+    void calc_charges();
 };
 
 #endif // MESH_H

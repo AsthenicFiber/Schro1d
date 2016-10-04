@@ -12,6 +12,7 @@ QString Mesh::parse_input(QString in_text)
     layers.clear();
     matfile = "materials.csv";
     T = 300;
+    schrodinger = true;
 
     for (int i = 0; i < in_text_list.length(); i++)
     {
@@ -165,6 +166,23 @@ QString Mesh::parse_input(QString in_text)
             out_text.append(in_text_list[i].section(QRegExp("[\\t ]"),1,-1));
             T = in_text_list[i].section(QRegExp("[\\t ]"),1,1).toDouble();
         }
+        else if (QString("schro").startsWith(command.toLower()))
+        {
+            out_text.append(in_text_list[i].section(QRegExp("[\\t ]"),1,-1));
+            QString b_val = in_text_list[i].section(QRegExp("[\\t ]"),1,1).toLower();
+            if (QString("false").startsWith(b_val))
+            {
+                schrodinger = false;
+            }
+            else if (QString("true").startsWith(b_val))
+            {
+                schrodinger = true;
+            }
+            else
+            {
+                return parse_error(i+1,1);
+            }
+        }
         else
         {
             out_text.append(in_text_list[i]);
@@ -261,30 +279,35 @@ QString Mesh::generate()
 
             Efn[x][0] = -d2val(layers[i].Efn, layers[i].dEfn, layers[i].ddEfn,x-x_min);
             Efp[x][0] = -d2val(layers[i].Efp, layers[i].dEfp, layers[i].ddEfp,x-x_min);
-            //Efn[x][0] += Ec[x][0] - Eg[x][0]/2;
-            //Efp[x][0] += Ec[x][0] - Eg[x][0]/2;
 
             eps[x][0] = matx.eps*EPSo; // e/c*s*V
             me[x][0] = matx.m_e*Me;
             mlh[x][0] = matx.m_lh*Me;
             mhh[x][0] = matx.m_hh*Me;
             mh[x][0] = pow(double(pow(double(matx.m_lh),double(1.5)) + pow(double(matx.m_hh),double(1.5))),double(.6667))*Me;
+
             if (matx.Psp != 0)
             {
                 // change to have a different sub-layer than GaN
-                pol_[x][0] = matx.Psp + 2*(3.191-matx.a)/matx.a*(matx.e31-matx.e33*matx.c13/matx.c33);
+                pol_[x][0] = 2*(matdata["GaN"].a-matx.a)/matx.a*(matx.e31-matx.e33*matx.c13/matx.c33);
+                pol_[x][0] += matx.Psp;
                 pol_[x][0] *= 1e4/Qe; // convert to e/cm^3 (e/cm^2 from C/m^2 then times 1/dx)
+
                 if (x == 0)
                 {
                     pol[x][0] = pol_[x][0];
                 }
                 else if (x == x_min)
                 {
-                    pol[x][0] = pol_[x][0]-pol_[x-1][0];
+                    pol[x][0] = pol_[x][0] - pol_[x-1][0];
                 }
                 else if (x == length-1)
                 {
                     pol[x][0] = -pol_[x][0];
+                }
+                else
+                {
+                    pol[x][0] = pol_[x][0] - pol_[x-1][0];
                 }
             }
             std::map<QString,LayerDopant>::iterator it = layers[i].layerdoping.begin();
@@ -320,9 +343,9 @@ QString Mesh::generate()
             {
                 double kT = kB*T; // eV
                 double h = hP; //eV*s
-                double Nc = 2*pow(double(2*3.14159*me[i][0]*kT/(h*h)),double(1.5));
+                double Nc = 2*pow(double(2*PI*me[i][0]*kT/(h*h)),double(1.5));
                 Nc *= DX*DX*DX*1e24; // convert to 1/cm^3
-                double Nv = 2*pow(double(2*3.14159*mh[i][0]*kT/(h*h)),double(1.5));
+                double Nv = 2*pow(double(2*PI*mh[i][0]*kT/(h*h)),double(1.5));
                 Nv *= DX*DX*DX*1e24; // convert to 1/cm^3
                 double ni = sqrt(Nc*Nv*exp(-Eg[x][0]/kT));
                 Efn[x][0] += Ec[x][0] - Eg[x][0]/2;
@@ -367,7 +390,6 @@ QString Mesh::generate()
 
 void Mesh::calc_potentials()
 {
-    //double q = 1.602e-19; // coulumbs
     double q = 1; // electrons
     //double Evac = 0;
     Un = V*-q + Ec;
@@ -376,11 +398,19 @@ void Mesh::calc_potentials()
 
 void Mesh::calc_charges()
 {
-    Qn = q_psi(Un,Efn,me,En,psin,T);
-    Qp = q_psi(Up,Efp,mlh,Ep,psip,T) + q_psi(Up,Efp,mhh,Eph,psiph,T);
-    Matrix rho = Qn*-1 + Qp;
-    //Matrix rho = n_psi()*-1 + p_psi() + ph_psi();
-    Q = pol;
+    if (schrodinger)
+    {
+        Qn = q_psi(Un,Efn,me,En,psin,T);
+        Qp = q_psi(Up,Efp,mlh,Ep,psip,T) + q_psi(Up,Efp,mhh,Eph,psiph,T);
+    }
+    else
+    {
+        Qn = q_boltz(Un,Efn,me,T);
+        Qp = q_boltz(Up,Efp*-1,mh,T);
+    }
+    Matrix rho = Qn*-1 + Qp; // e/cm^3
+    Q = pol; // e/cm^3
+    Q += rho;
 
     // Add ionized dopants to charge profile
     for (unsigned int i = 0; i < doping.size(); i++)
@@ -394,10 +424,6 @@ void Mesh::calc_charges()
             Q += Na_ion(doping[i].E,doping[i].N)*-1;
         }
     }
-    //Qp *= (-sum(Q)/sum(rho)); // e/(cm^3)
-    //Qn *= (-sum(Q)/sum(rho)); // e/(cm^3)
-    //Q += rho*(-sum(Q)/sum(rho)); // e/(cm^3)
-    Q += rho;
 }
 
 Matrix Mesh::Nd_ion(Matrix Ed, Matrix Nd)
@@ -422,60 +448,9 @@ Matrix Mesh::Na_ion(Matrix Ea, Matrix Na)
     return Na_i;
 }
 
-Matrix Mesh::n_boltz()
-{
-    double kT = kB*T; //eV
-    double h = hP; //eV*s
-    Matrix n = Matrix(length,1);
-    for (int i = 0; i < length; i++)
-    {
-        double Nc = 2*pow(2*3.14159*me[i][0]*kT/(h*h),3/2);
-        // non-degenerate
-        n[i][0] = Nc*exp(-(Ec[i][0] - Efn[i][0])/kT);
-    }
-    return n;
-}
-
-Matrix Mesh::p_boltz()
-{
-    double kT = kB*T; //eV
-    double h = hP; //eV*s
-    Matrix p = Matrix(length,1);
-    Matrix Ev = Ec + Eg*-1;
-    for (int i = 0; i < length; i++)
-    {
-        double Nv = 2*pow(2*3.14159*mh[i][0]*kT/(h*h),3/2);
-        // non-degenerate
-        p[i][0] = Nv*exp(-(Efp[i][0] - Ev[i][0])/kT);
-    }
-    return p;
-}
-
 double d2val(double a, double da, double dda, double x)
 {
     return a + da*x + dda*x*x/2;
-}
-
-void Mesh::norm_psi()
-{
-    for (int i = 1; i < length; i++)
-    {
-        // Normalize psi[:][i]
-        double sumn = 0;
-        double sump = 0;
-        for (int j = 1; j < length; j++)
-        {
-            sumn += psin[j][i]*psin[j][i];
-            sump += psip[j][i]*psip[j][i];
-        }
-        double normn = sqrt(sumn);
-        double normp = sqrt(sump);
-        for (int j = 1; j < length; j++)
-        {
-            psin[j][i] = psin[j][i]/normn;
-            psip[j][i] = psip[j][i]/normp;
-        }
-    }
 }
 
 void Mesh::poiss()
@@ -488,4 +463,16 @@ void Mesh::schro()
     schro_solve(Un, me, &psin, &En);
     schro_solve(Up, mlh, &psip, &Ep);
     schro_solve(Up, mhh, &psiph, &Eph);
+}
+
+void Mesh::solve_SP()
+{
+    calc_potentials();
+    for (int i = 0; i < 2; i++)
+    {
+        schro();
+        calc_charges();
+        poiss();
+        calc_potentials();
+    }
 }

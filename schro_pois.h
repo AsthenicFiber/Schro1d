@@ -32,5 +32,7 @@ double max_bound(Matrix A);
 Matrix transpose(Matrix A);
 
 Matrix q_psi(Matrix U, Matrix Ef, Matrix m, Matrix E, Matrix psi, double T);
+Matrix q_boltz(Matrix U, Matrix Ef, Matrix m, double T);
+double fermi_integral(double E);
 
 #endif // SCHRO_POIS_H
