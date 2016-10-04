@@ -401,7 +401,7 @@ void Mesh::calc_charges()
     if (schrodinger)
     {
         Qn = q_psi(Un,Efn,me,En,psin,T);
-        Qp = q_psi(Up,Efp,mlh,Ep,psip,T) + q_psi(Up,Efp,mhh,Eph,psiph,T);
+        Qp = q_psi(Up,Efp*-1,mlh,Ep,psip,T) + q_psi(Up,Efp*-1,mhh,Eph,psiph,T);
     }
     else
     {
