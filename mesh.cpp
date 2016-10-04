@@ -213,6 +213,7 @@ QString Mesh::generate()
     doping.resize(max_dopants*2, new_dopant);
 
     psip = Matrix(length,length);
+    psiph = Matrix(length,length);
     psin = Matrix(length,length);
     Ec = Matrix(length,1);
     Q = Matrix(length,1);
@@ -220,6 +221,7 @@ QString Mesh::generate()
     Up = Matrix(length,1);
     Un = Matrix(length,1);
     Ep = Matrix(length,1);
+    Eph = Matrix(length,1);
     En = Matrix(length,1);
     Qp = Matrix(length,1);
     Qn = Matrix(length,1);
@@ -374,9 +376,9 @@ void Mesh::calc_potentials()
 
 void Mesh::calc_charges()
 {
-    Qn = q_psi(Un,Efn,En,psin,T);
-    Qp = q_psi(Up,Efp,Ep,psip,T) + q_psi(Up,Efp,Eph,psiph,T);
-    Matrix rho = Qn + Qp;
+    Qn = q_psi(Un,Efn,me,En,psin,T);
+    Qp = q_psi(Up,Efp,mlh,Ep,psip,T) + q_psi(Up,Efp,mhh,Eph,psiph,T);
+    Matrix rho = Qn*-1 + Qp;
     //Matrix rho = n_psi()*-1 + p_psi() + ph_psi();
     Q = pol;
 
@@ -392,9 +394,10 @@ void Mesh::calc_charges()
             Q += Na_ion(doping[i].E,doping[i].N)*-1;
         }
     }
-    Qp *= (-sum(Q)/sum(rho)); // e/(cm^3)
-    Qn *= (-sum(Q)/sum(rho)); // e/(cm^3)
-    Q += rho*(-sum(Q)/sum(rho)); // e/(cm^3)
+    //Qp *= (-sum(Q)/sum(rho)); // e/(cm^3)
+    //Qn *= (-sum(Q)/sum(rho)); // e/(cm^3)
+    //Q += rho*(-sum(Q)/sum(rho)); // e/(cm^3)
+    Q += rho;
 }
 
 Matrix Mesh::Nd_ion(Matrix Ed, Matrix Nd)
@@ -444,96 +447,6 @@ Matrix Mesh::p_boltz()
         double Nv = 2*pow(2*3.14159*mh[i][0]*kT/(h*h),3/2);
         // non-degenerate
         p[i][0] = Nv*exp(-(Efp[i][0] - Ev[i][0])/kT);
-    }
-    return p;
-}
-
-Matrix Mesh::n_psi()
-{
-    double kT = kB*T; //eV
-    Matrix n(length,1);
-
-    // Find maximum bounded energy
-    double E_max = max_bound(Un);
-
-    for (int i = 0; i < length; i++)
-    {
-        if (En[i][0] >= E_max)
-        {
-            break;
-        }
-
-        // Find energy level occupancy and concentration over x
-        Matrix n_E(length,1);
-        for (int j = 0; j < length; j++)
-        {
-            double F;
-            F = 1/(1 + exp((En[i][0] - Efn[j][0])/kT));
-            n_E[j][0] = F*psin[j][i]*psin[j][i]*1e8; // e/(cm^3)
-        }
-
-        // Add to total carriers
-        n = n + n_E;
-    }
-    return n;
-}
-
-Matrix Mesh::p_psi()
-{
-    double kT = kB*T; //eV
-    Matrix p(length,1);
-
-    // Find maximum bounded energy
-    double E_max = max_bound(Up);
-
-    for (int i = 0; i < length; i++)
-    {
-        if (Ep[i][0] >= E_max)
-        {
-            break;
-        }
-
-        // Find energy level occupancy and concentration over x
-        Matrix p_E(length,1);
-        for (int j = 0; j < length; j++)
-        {
-            double F;
-            F = 1/(1 + exp((Ep[i][0] - Efp[j][0])/kT));
-            p_E[j][0] = F*psip[j][i]*psip[j][i]*1e8; // e/(cm^3)
-        }
-
-        // Add to total carriers
-        p = p + p_E;
-    }
-    return p;
-}
-
-Matrix Mesh::ph_psi()
-{
-    double kT = kB*T; //eV
-    Matrix p(length,1);
-
-    // Find maximum bounded energy
-    double E_max = max_bound(Up);
-
-    for (int i = 0; i < length; i++)
-    {
-        if (Eph[i][0] >= E_max)
-        {
-            break;
-        }
-
-        // Find energy level occupancy and concentration over x
-        Matrix p_E(length,1);
-        for (int j = 0; j < length; j++)
-        {
-            double F;
-            F = 1/(1 + exp((Eph[i][0] - Efp[j][0])/kT));
-            p_E[j][0] = F*psiph[j][i]*psiph[j][i]*1e8; // e/(cm^3)
-        }
-
-        // Add to total carriers
-        p = p + p_E;
     }
     return p;
 }

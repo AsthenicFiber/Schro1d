@@ -3,7 +3,7 @@
 
 #include "matrix.h"
 
-#define DX 3.3356e-19 // dx in c*s
+#define DX 3.3356e-19 // dx in c*s, c*s/Angstrom
 #define PI 3.14159 // pi
 #define EPSo 1.656758e16 // vacuum permittivity in e/c*s*V
 #define Qe 1.602e-19 // electron charge
@@ -31,6 +31,6 @@ double max_bound(Matrix A);
 
 Matrix transpose(Matrix A);
 
-Matrix q_psi(Matrix U, Matrix Ef, Matrix E, Matrix psi, double T);
+Matrix q_psi(Matrix U, Matrix Ef, Matrix m, Matrix E, Matrix psi, double T);
 
 #endif // SCHRO_POIS_H

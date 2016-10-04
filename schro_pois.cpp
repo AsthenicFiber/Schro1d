@@ -196,7 +196,7 @@ Matrix transpose(Matrix A)
     return B;
 }
 
-Matrix q_psi(Matrix U, Matrix Ef, Matrix E, Matrix psi, double T)
+Matrix q_psi(Matrix U, Matrix Ef, Matrix m, Matrix E, Matrix psi, double T)
 {
     int length = Ef.rows();
     double kT = kB*T; //eV
@@ -216,7 +216,9 @@ Matrix q_psi(Matrix U, Matrix Ef, Matrix E, Matrix psi, double T)
         Matrix n_E(length,1);
         for (int j = 0; j < length; j++)
         {
-            double F = 1/(1 + exp((E[i][0] - Ef[j][0])/kT));
+            //double F = 1/(1 + exp((E[i][0] - Ef[j][0])/kT));
+            double F = kT*(m[j][0]*4*PI/(hP*hP))*log(1 + exp(-(E[i][0] - Ef[j][0])/kT)); // e/eV*cs^2
+            F *= 1e8*1e8*DX*DX; // e/eV*cs^2
             n_E[j][0] = F*psi[j][i]*psi[j][i]*1e8; // e/(cm^3)
         }
 
