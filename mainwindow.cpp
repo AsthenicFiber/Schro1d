@@ -94,15 +94,14 @@ void MainWindow::on_runButton_clicked()
     // Run calculation
     mesh.solve_SP();
 
-    // Print and Plot results
-    outputText->append(print_mat(mesh.Qn));
-    outputText->append(print_mat(mesh.Qp));
-    outputText->append(print_mat(mesh.Q));
-    outputText->append(print_mat(mesh.V));
-    outputText->append(print_mat(mesh.Un));
-    outputText->append(print_mat(mesh.Efn));
-    outputText->append(print_mat(mesh.Up*-1));
-    outputText->append(print_mat(mesh.pol));
+    outputText->append(QString("x\tEc\tEfn\tEv\t\tn\tp\tpol\tQ\tV"));
+    for (int i = 0; i < mesh.V.rows(); i++)
+    {
+        outputText->append(QString("%1\t%2\t%3\t%4\t\t%5\t%6\t%7\t%8\t%9").arg(i).arg(mesh.Un[i][0]).arg(mesh.Efn[i][0]).arg(-mesh.Up[i][0]).arg(mesh.Qn[i][0]).arg(mesh.Qp[i][0]).arg(mesh.pol[i][0]).arg(mesh.Q[i][0]).arg(mesh.V[i][0]));
+    }
+
+    plot_band(mesh.V,mesh.Un,mesh.Up*-1,mesh.Efn,mesh.Efp);
+    plot_charge(mesh.Qn,mesh.Qp,mesh.Q);
 }
 
 void MainWindow::testrun()
@@ -251,7 +250,7 @@ void MainWindow::build_form()
     inputLabel->setGeometry(10,30,411,13);
 
     outputText = new QTextBrowser(this);
-    outputText->setGeometry(10,350,411,241);
+    outputText->setGeometry(10,350,411,261);
 
     outputLabel = new QLabel(this);
     outputLabel->setText("Output");
@@ -261,4 +260,79 @@ void MainWindow::build_form()
     filenameText->setGeometry(450,200,120,20);
     filenameText->setPlaceholderText(QString("Filename"));
     connect(filenameText, SIGNAL(editingFinished()), this, SLOT(on_filenameText_editingFinished()));
+
+    bandscene = new QGraphicsScene(0,0,400,260,this);
+    bandview = new QGraphicsView(bandscene,this);
+    bandview->setScene(bandscene);
+    bandview->setGeometry(599,49,402,262);
+    bandview->show();
+
+    bandLabel = new QLabel(this);
+    bandLabel->setText("Band Diagram");
+    bandLabel->setGeometry(600,30,400,13);
+
+    chargescene = new QGraphicsScene(0,0,400,260,this);
+    chargeview = new QGraphicsView(chargescene,this);
+    chargeview->setScene(chargescene);
+    chargeview->setGeometry(599,349,402,262);
+    chargeview->show();
+
+    chargeLabel = new QLabel(this);
+    chargeLabel->setText("Charge");
+    chargeLabel->setGeometry(600,330,400,13);
+}
+
+void MainWindow::plot_band(Matrix V, Matrix Ec, Matrix Ev, Matrix Efn, Matrix Efp)
+{
+    bandscene->clear();
+    int length = V.rows();
+    double x_p = bandscene->width()/double(length-1);
+    double top = -min(V);
+    double height = -min(V) - min(Ev);
+    double y_p = bandscene->height()/height;
+
+    plot_matrix(V*-1,x_p,y_p,top,QPen(Qt::green),bandscene);
+    plot_matrix(Ec,x_p,y_p,top,QPen(Qt::black),bandscene);
+    plot_matrix(Ev,x_p,y_p,top,QPen(Qt::black),bandscene);
+    plot_matrix(Efn,x_p,y_p,top,QPen(Qt::blue),bandscene);
+    plot_matrix(Efp,x_p,y_p,top,QPen(Qt::red),bandscene);
+}
+
+void MainWindow::plot_charge(Matrix n, Matrix p, Matrix Q)
+{
+    chargescene->clear();
+    int length = n.rows();
+    double x_p = chargescene->width()/double(length-1);
+    double top;
+    double bot;
+    bot = min(Q,1,Q.rows()-1); // remove this line when Q input is removed
+    if (max(n) > max(p))
+        top = max(n);
+    else
+        top = max(p);
+    if (min(n) < min(p))
+        bot = min(n);
+    else
+        bot = min(p);
+    double height = top - bot;
+    double y_p = bandscene->height()/height;
+
+    //plot_matrix(Q,x_p,y_p,top,QPen(Qt::black),chargescene);
+    plot_matrix(n,x_p,y_p,top,QPen(Qt::blue),chargescene);
+    plot_matrix(p,x_p,y_p,top,QPen(Qt::red),chargescene);
+    //chargescene->addEllipse(0,0,5,5);
+    //chargescene->addLine(10,10,20,20);
+
+}
+
+void plot_matrix(Matrix A, double x_p, double y_p, double top, QPen pen, QGraphicsScene *scene)
+{
+    for (int i = 1; i < A.rows(); i++)
+    {
+        double x0 = x_p*double(i-1);
+        double x1 = x_p*double(i);
+        double y0 = y_p*(-A[i-1][0] + top);
+        double y1 = y_p*(-A[i][0] + top);
+        scene->addLine(x0,y0,x1,y1,pen);
+    }
 }

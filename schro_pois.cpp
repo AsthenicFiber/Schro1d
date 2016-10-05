@@ -151,7 +151,7 @@ double min(Matrix A, int start, int end)
     double min = A[start][0];
     for (int i = start; i < end; i++)
     {
-        if (A[i][0] > min)
+        if (A[i][0] < min)
         {
             min = A[i][0];
         }

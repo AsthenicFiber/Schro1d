@@ -7,10 +7,14 @@
 #include <QPlainTextEdit>
 #include <QTextBrowser>
 #include <QLineEdit>
+#include <QGraphicsView>
+#include <QGraphicsScene>
 
 #include "mesh.h"
 #include "highlighter.h"
 //#include <map>
+
+void plot_matrix(Matrix A, double x_p, double y_p, double top, QPen pen, QGraphicsScene *scene);
 
 namespace Ui {
 class MainWindow;
@@ -39,14 +43,22 @@ private:
     QTextBrowser * outputText;
     QLabel * outputLabel;
     QLabel * inputLabel;
+    QLabel * bandLabel;
+    QLabel * chargeLabel;
     QPlainTextEdit * inputText;
     QLineEdit * filenameText;
+    QGraphicsScene * bandscene;
+    QGraphicsView * bandview;
+    QGraphicsScene * chargescene;
+    QGraphicsView * chargeview;
 
     Highlighter *highlighter;
 
     Mesh mesh;
 
     void build_form();
+    void plot_band(Matrix V, Matrix Ec, Matrix Ev, Matrix Efn, Matrix Efp);
+    void plot_charge(Matrix n, Matrix p, Matrix Q);
 
 };
 
