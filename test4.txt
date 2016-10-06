@@ -1,0 +1,3 @@
+L GaN d=10 EdSi=.02 NdSi=1e17
+L GaN ternX=InN X=1 dX=-.05 d=20
+L GaN d=10 EdSi=.02 NdSi=1e17

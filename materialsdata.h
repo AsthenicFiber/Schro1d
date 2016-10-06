@@ -21,9 +21,9 @@ struct Material
     double c13 = 1;
     double c33 = 1;
     double c44 = 1;
-    double b = 0;
-    double e31 = 0;
-    double e33 = 0;
+    double b = 1;
+    double e31 = 1;
+    double e33 = 1;
     double alpha = 1;
     double mu_n = 1;
     double mu_p = 1;

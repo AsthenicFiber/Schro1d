@@ -57,3 +57,7 @@ unix:!macx: LIBS += -L$$PWD/./ -lblas
 unix:!macx: LIBS += -L$$PWD/./ -llapack
 
 unix:!macx: LIBS += -L$$PWD/./ -llapacke
+
+DISTFILES += \
+    materials.csv \
+    test4.txt

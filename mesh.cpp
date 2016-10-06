@@ -1,4 +1,5 @@
 #include "mesh.h"
+#include <cmath>
 
 Mesh::Mesh()
 {
@@ -468,9 +469,10 @@ void Mesh::schro()
 void Mesh::solve_SP()
 {
     calc_potentials();
-    for (int i = 0; i < 1; i++)
+    for (int i = 0; i < 20; i++)
     {
-        schro();
+        if (schrodinger)
+            schro();
         calc_charges();
         poiss();
         calc_potentials();

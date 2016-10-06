@@ -9,10 +9,11 @@ void poiss_solve(Matrix Q, Matrix eps, Matrix* V)
 {
     Matrix A = diff2_n(Q.rows());
     double coef = 1/(DX*DX); // dx in c*s
+    int end = eps.rows() - 1;
     A = A*coef;
     Q *= 1e-8*1e-8*1e-8/(DX*DX*DX); // e/(c*s)^3
-    Matrix B(eps.rows(),1);
-    for (int x = 0; x < eps.rows(); x++)
+    Matrix B(end+1,1);
+    for (int x = 0; x < end+1; x++)
     {
         B[x][0] = Q[x][0]/eps[x][0];
     }
@@ -23,13 +24,13 @@ void poiss_solve(Matrix Q, Matrix eps, Matrix* V)
     A[0][1] = 0;
     B[0][0] = 0;
     // bottom contact dV/dx = 0
-    //A[A.rows()][A.rows()-1] = -1;
-    //A[A.rows()][A.rows()] = 1;
-    //B[A.rows()][0] = 0;
+    //A[end][end-1] = -1;
+    //A[end][end] = 1;
+    //B[end][0] = 0;
     // bottom contact V = 0
-    A[A.rows()][A.rows()-1] = 0;
-    A[A.rows()][A.rows()] = 1;
-    B[A.rows()][0] = 0;
+    A[end][end-1] = 0;
+    A[end][end] = 1;
+    B[end][0] = 0;
 
     int n = A.rows();
     int nrhs = B.cols();

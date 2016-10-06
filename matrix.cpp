@@ -71,6 +71,7 @@ Matrix::~Matrix()
     if (p != nullptr)
     {
         delete [] p;
+        p = nullptr;
     }
     //std::cout << "shutting down\n";
 }
