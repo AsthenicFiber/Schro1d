@@ -82,6 +82,8 @@ private:
     MaterialsData matdata;
     QString matfile;
     double T;
+    double pol_sc;
+    QString pol_sub;
     bool schrodinger;
 
     Matrix Nd_ion(Matrix Ed, Matrix Nd);

@@ -205,6 +205,7 @@ Matrix q_psi(Matrix U, Matrix Ef, Matrix m, Matrix E, Matrix psi, double T)
 
     // Find maximum bounded energy
     double E_max = max_bound(U);
+    //E_max = max(U);
 
     for (int i = 0; i < length; i++)
     {

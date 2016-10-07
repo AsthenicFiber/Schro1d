@@ -11,6 +11,7 @@ Highlighter::Highlighter(QTextDocument *parent) : QSyntaxHighlighter(parent)
                     << "^([cC]([oO]([nN]([tT]([aA]([cC][tT]?)?)?)?)?)?)\\b"
                     << "^([mM]([aA]([tT]([fF]([iI]([lL][eE]?)?)?)?)?)?)\\b"
                     << "^([sS]([cC]([hH]([rR][oO]?)?)?)?)\\b"
+                    << "^([pP]([oO]([lL]([aA][rR]?)?)?)?)\\b"
                     << "^([tT]([eE]([mM][pP]?)?)?)\\b";
     foreach (const QString &pattern, keywordPatterns)
     {
@@ -23,7 +24,9 @@ Highlighter::Highlighter(QTextDocument *parent) : QSyntaxHighlighter(parent)
     paramFormat.setFontWeight(QFont::Normal);
     QStringList paramPatterns;
     paramPatterns << "\\b(d)=" << "\\b(d{0,2}[XY])=" << "\\b(tern[XY])="
-                  << "\\b(d{0,2}Ef[np])=" << "\\b(d{0,2}E[da]\\S{1,})=" << "\\b(d{0,2}N[da]\\S{1,})=";
+                  << "\\b(d{0,2}Ef[np])=" << "\\b(d{0,2}E[da]\\S{1,})="
+                  << "\\b(d{0,2}N[da]\\S{1,})="
+                  << "\\b(scale|sub)=";
     foreach (const QString &pattern, paramPatterns)
     {
         rule.pattern = QRegExp(pattern);

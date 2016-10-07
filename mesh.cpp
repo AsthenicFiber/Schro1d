@@ -13,6 +13,8 @@ QString Mesh::parse_input(QString in_text)
     layers.clear();
     matfile = "materials.csv";
     T = 300;
+    pol_sub = "GaN";
+    pol_sc = 1;
     schrodinger = true;
 
     for (int i = 0; i < in_text_list.length(); i++)
@@ -145,7 +147,7 @@ QString Mesh::parse_input(QString in_text)
                 }
                 else
                 {
-                    return parse_error(i+1,j-2);
+                    return parse_error(i+1,j-1);
                 }
             }
 
@@ -162,9 +164,35 @@ QString Mesh::parse_input(QString in_text)
             out_text.append(in_text_list[i].section(QRegExp("[\\t ]"),1,-1));
             matfile = in_text_list[i].section(QRegExp("[\\t ]"),1,1);
         }
+        else if (QString("polar").startsWith(command.toLower()))
+        {
+            out_text.append(in_text_list[i]);
+
+            QStringList params = in_text_list[i].split(QRegExp("[\\t ]"),QString::SkipEmptyParts);
+            for (int j = 1; j < params.length(); j++)
+            {
+                //check if contains '='
+                if (params[j].count('=') != 1)
+                {
+                    return parse_error(i+1,j);
+                }
+                QString param = params[j].section('=',0,0);
+                QString val = params[j].section('=',1,1);
+                // check values are not empty
+                if (param == "" || val == "")
+                {
+                    return parse_error(i+1,j-2);
+                }
+
+                if (param == "sub")
+                    pol_sub = val;
+                else if (param == "scale")
+                    pol_sc = val.toDouble();
+            }
+        }
         else if (QString("temp").startsWith(command.toLower()))
         {
-            out_text.append(in_text_list[i].section(QRegExp("[\\t ]"),1,-1));
+            out_text.append(in_text_list[i]);
             T = in_text_list[i].section(QRegExp("[\\t ]"),1,1).toDouble();
         }
         else if (QString("schro").startsWith(command.toLower()))
@@ -289,8 +317,7 @@ QString Mesh::generate()
 
             if (matx.Psp != 0)
             {
-                // change to have a different sub-layer than GaN
-                pol_[x][0] = 2*(matdata["GaN"].a-matx.a)/matx.a*(matx.e31-matx.e33*matx.c13/matx.c33);
+                pol_[x][0] = 2*(matdata[pol_sub].a-matx.a)/matx.a*(matx.e31-matx.e33*matx.c13/matx.c33);
                 pol_[x][0] += matx.Psp;
                 pol_[x][0] *= 1e4/Qe; // convert to e/cm^3 (e/cm^2 from C/m^2 then times 1/dx)
 
@@ -344,9 +371,9 @@ QString Mesh::generate()
             {
                 double kT = kB*T; // eV
                 double h = hP; //eV*s
-                double Nc = 2*pow(double(2*PI*me[i][0]*kT/(h*h)),double(1.5));
+                double Nc = 2*pow(double(2*PI*me[x][0]*kT/(h*h)),double(1.5));
                 Nc *= DX*DX*DX*1e24; // convert to 1/cm^3
-                double Nv = 2*pow(double(2*PI*mh[i][0]*kT/(h*h)),double(1.5));
+                double Nv = 2*pow(double(2*PI*mh[x][0]*kT/(h*h)),double(1.5));
                 Nv *= DX*DX*DX*1e24; // convert to 1/cm^3
                 double ni = sqrt(Nc*Nv*exp(-Eg[x][0]/kT));
                 Efn[x][0] += Ec[x][0] - Eg[x][0]/2;
@@ -386,6 +413,7 @@ QString Mesh::generate()
             doping[i].E = doping[i].E + Ec + Eg*-1; // negative value relative to Evac
         }
     }
+    pol *= pol_sc;
     return "Mesh Generated";
 }
 
