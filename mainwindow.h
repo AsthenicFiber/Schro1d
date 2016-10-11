@@ -9,12 +9,10 @@
 #include <QLineEdit>
 #include <QGraphicsView>
 #include <QGraphicsScene>
+#include "graphicsplot.h"
 
 #include "mesh.h"
 #include "highlighter.h"
-//#include <map>
-
-void plot_matrix(Matrix A, double x_p, double y_p, double top, QPen pen, QGraphicsScene *scene);
 
 namespace Ui {
 class MainWindow;
@@ -34,6 +32,7 @@ private slots:
     void on_loadButton_clicked();
     void on_filenameText_editingFinished();
     void testrun();
+    void on_rangeSelected();
 
 private:
     Ui::MainWindow *ui;
@@ -45,11 +44,12 @@ private:
     QLabel * inputLabel;
     QLabel * bandLabel;
     QLabel * chargeLabel;
+    QLabel * nsLabel;
     QPlainTextEdit * inputText;
     QLineEdit * filenameText;
-    QGraphicsScene * bandscene;
+    GraphicsPlot * bandscene;
     QGraphicsView * bandview;
-    QGraphicsScene * chargescene;
+    GraphicsPlot * chargescene;
     QGraphicsView * chargeview;
 
     Highlighter *highlighter;

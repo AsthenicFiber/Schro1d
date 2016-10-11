@@ -24,7 +24,8 @@ HEADERS += \
     schro_pois.h \
     mesh.h \
     materialsdata.h \
-    highlighter.h
+    highlighter.h \
+    graphicsplot.h
 
 SOURCES += \
     main.cpp \
@@ -33,7 +34,8 @@ SOURCES += \
     schro_pois.cpp \
     mesh.cpp \
     materialsdata.cpp \
-    highlighter.cpp
+    highlighter.cpp \
+    graphicsplot.cpp
 
 unix:!macx: CONFIG += qt debug
 
