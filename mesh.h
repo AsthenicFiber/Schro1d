@@ -85,6 +85,7 @@ private:
     double pol_sc;
     QString pol_sub;
     bool schrodinger;
+    double Ef, top_bc, bot_bc;
 
     Matrix Nd_ion(Matrix Ed, Matrix Nd);
     Matrix Na_ion(Matrix Ea, Matrix Na);

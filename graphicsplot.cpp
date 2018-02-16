@@ -46,12 +46,20 @@ void GraphicsPlot::mousePressEvent(QGraphicsSceneMouseEvent * mouseEvent)
     //QPointF pnt = mouseEvent->buttonDownScenePos(Qt::LeftButton);
     QPointF pnt = mouseEvent->scenePos();
     X1 = pnt.x()/x_pix;
+    if (X1 < left)
+        X1 = left;
+    else if (X1 > right)
+        X1 = right;
 }
 
 void GraphicsPlot::mouseReleaseEvent(QGraphicsSceneMouseEvent * mouseEvent)
 {
     QPointF pnt = mouseEvent->scenePos();
     X2 = pnt.x()/x_pix;
+    if (X2 < left)
+        X2 = left;
+    else if (X2 > right)
+        X2 = right;
     emit rangeSelected(int(round(X2)));
 }
 

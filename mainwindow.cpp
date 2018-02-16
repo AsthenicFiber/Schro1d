@@ -325,10 +325,16 @@ void MainWindow::on_rangeSelected()
 {
     int x1 = chargescene->x1();
     int x2 = chargescene->x2();
-    double ns;
+    double ns, ps;
     if (x1 < x2)
+    {
         ns = sum(mesh.Qn,x1,x2)*1e-8;
+        ps = sum(mesh.Qp,x1,x2)*1e-8;
+    }
     else
+    {
         ns = sum(mesh.Qn,x2,x1)*1e-8;
-    nsLabel->setText(QString("x1 = %1A, x2 = %2A, ns = %3 cm^-2").arg(x1).arg(x2).arg(ns));
+        ps = sum(mesh.Qp,x2,x1)*1e-8;
+    }
+    nsLabel->setText(QString("x1 = %1A, x2 = %2A, ns = %3 cm^-2, ps = %4 cm^-2").arg(x1).arg(x2).arg(ns).arg(ps));
 }

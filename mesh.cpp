@@ -273,6 +273,9 @@ QString Mesh::generate()
     Qp = Matrix(length,1);
     Qn = Matrix(length,1);
 
+    top_bc = 0;
+    bot_bc = 0;
+
     int x = 0;
     for (unsigned int i = 0; i < layers.size(); i++)
     {
@@ -362,13 +365,18 @@ QString Mesh::generate()
                     doping[N_dop + max_dopants].N[x][0] = d2val(N_,dN_,ddN_,x-x_min);
                     doping[N_dop + max_dopants].E[x][0] = d2val(E_,dE_,ddE_,x-x_min);
                     doping[N_dop + max_dopants].type = 'p';
-                    dop_conc -= doping[N_dop].N[x][0];
+                    dop_conc -= doping[N_dop + max_dopants].N[x][0];
                 }
                 N_dop++;
                 ++it;
             }
             if (x == 0)
             {
+                Ef = fermi_level(me[x][0],mh[x][0],Eg[x][0],T,dop_conc);
+                Efn[x][0] += Ec[x][0] - Eg[x][0]/2 + Ef;
+                Efp[x][0] += Ec[x][0] - Eg[x][0]/2 + Ef;
+                //top_bc = Ef;
+                /*
                 double kT = kB*T; // eV
                 double h = hP; //eV*s
                 double Nc = 2*pow(double(2*PI*me[x][0]*kT/(h*h)),double(1.5));
@@ -376,8 +384,6 @@ QString Mesh::generate()
                 double Nv = 2*pow(double(2*PI*mh[x][0]*kT/(h*h)),double(1.5));
                 Nv *= DX*DX*DX*1e24; // convert to 1/cm^3
                 double ni = sqrt(Nc*Nv*exp(-Eg[x][0]/kT));
-                Efn[x][0] += Ec[x][0] - Eg[x][0]/2;
-                Efp[x][0] += Ec[x][0] - Eg[x][0]/2;
                 if (dop_conc > 0)
                 {
                     Efn[x][0] += kT*log(dop_conc/ni);
@@ -393,9 +399,14 @@ QString Mesh::generate()
                     Efn[x][0] += 3*kT/4*log(mh[x][0]/me[x][0]);
                     Efp[x][0] += 3*kT/4*log(mh[x][0]/me[x][0]);
                 }
+                */
             }
             else
             {
+                if (x == length-1)
+                {
+                    bot_bc = fermi_level(me[x][0],mh[x][0],Eg[x][0],T,dop_conc)-Ef;
+                }
                 Efn[x][0] += Efn[0][0] + layers[0].Efn;
                 Efp[x][0] += Efp[0][0] + layers[0].Efp;
             }
@@ -484,7 +495,8 @@ double d2val(double a, double da, double dda, double x)
 
 void Mesh::poiss()
 {
-    poiss_solve(Q, eps, &V);
+    //poiss_solve(Q, eps, &V);
+    poiss_solve(Q, eps, &V, top_bc, bot_bc);
 }
 
 void Mesh::schro()
@@ -497,7 +509,7 @@ void Mesh::schro()
 void Mesh::solve_SP()
 {
     calc_potentials();
-    for (int i = 0; i < 20; i++)
+    for (int i = 0; i < 4; i++)
     {
         if (schrodinger)
             schro();

@@ -5,7 +5,7 @@
 
 // Functions for Schrodinger Poisson solver
 
-void poiss_solve(Matrix Q, Matrix eps, Matrix* V)
+void poiss_solve(Matrix Q, Matrix eps, Matrix* V, double top_bc, double bot_bc)
 {
     Matrix A = diff2_n(Q.rows());
     double coef = 1/(DX*DX); // dx in c*s
@@ -22,7 +22,7 @@ void poiss_solve(Matrix Q, Matrix eps, Matrix* V)
     // top contact V = 0
     A[0][0] = 1;
     A[0][1] = 0;
-    B[0][0] = 0;
+    B[0][0] = top_bc;
     // bottom contact dV/dx = 0
     //A[end][end-1] = -1;
     //A[end][end] = 1;
@@ -30,7 +30,7 @@ void poiss_solve(Matrix Q, Matrix eps, Matrix* V)
     // bottom contact V = 0
     A[end][end-1] = 0;
     A[end][end] = 1;
-    B[end][0] = 0;
+    B[end][0] = bot_bc;
 
     int n = A.rows();
     int nrhs = B.cols();
@@ -45,6 +45,12 @@ void poiss_solve(Matrix Q, Matrix eps, Matrix* V)
     delete [] ipiv;
     return;
 }
+/*
+void poiss_solve(Matrix Q, Matrix eps, Matrix *V)
+{
+    poiss_solve(Q,eps,&V,0,0);
+}
+*/
 
 void schro_solve(Matrix U, Matrix m, Matrix* psi, Matrix* E)
 {
@@ -219,8 +225,8 @@ Matrix q_psi(Matrix U, Matrix Ef, Matrix m, Matrix E, Matrix psi, double T)
         for (int j = 0; j < length; j++)
         {
             //double F = 1/(1 + exp((E[i][0] - Ef[j][0])/kT));
-            double F = kT*(m[j][0]*4*PI/(hP*hP))*log(1 + exp(-(E[i][0] - Ef[j][0])/kT)); // e/eV*cs^2
-            F *= 1e8*1e8*DX*DX; // e/eV*cs^2
+            double F = kT*(m[j][0]*4*PI/(hP*hP))*log(1 + exp(-(E[i][0] - Ef[j][0])/kT)); // e/cs^2
+            F *= 1e8*1e8*DX*DX; // e/cs^2
             n_E[j][0] = F*psi[j][i]*psi[j][i]*1e8; // e/(cm^3)
         }
 
@@ -266,4 +272,29 @@ double fermi_integral(double E)
         err = d_eta*sqrt(eta)/(1+exp(eta-E));
     }
     return F;
+}
+
+double fermi_level(double me, double mh, double Eg, double T, double dop_conc)
+{
+    double kT = kB*T; // eV
+    double h = hP; //eV*s
+    double Nc = 2*pow(double(2*PI*me*kT/(h*h)),double(1.5));
+    Nc *= DX*DX*DX*1e24; // convert to 1/cm^3
+    double Nv = 2*pow(double(2*PI*mh*kT/(h*h)),double(1.5));
+    Nv *= DX*DX*DX*1e24; // convert to 1/cm^3
+    double ni = sqrt(Nc*Nv*exp(-Eg/kT));
+    double Ef = 0;
+    if (dop_conc > 0)
+    {
+        Ef += kT*log(dop_conc/ni);
+    }
+    else if (dop_conc < 0)
+    {
+        Ef -= kT*log(-dop_conc/ni);
+    }
+    else
+    {
+        Ef += 3*kT/4*log(mh/me);
+    }
+    return Ef;
 }

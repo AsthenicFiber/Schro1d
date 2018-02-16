@@ -76,7 +76,9 @@ QString MaterialsData::load()
 Material::Material(Material A, Material B, double X)
 {
     double bow = A.bowing[B.name];
+    //double split = 0.6;
     Eg = A.Eg + (B.Eg - A.Eg - bow)*X + bow*X*X;
+    //chi = A.chi + (B.chi - A.chi - bow*split)*X + bow*split*X*X;
     chi = A.chi*(1-X) + B.chi*X;
     eps = A.eps*(1-X) + B.eps*X;
     m_e = A.m_e*(1-X) + B.m_e*X;

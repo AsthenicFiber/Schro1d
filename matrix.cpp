@@ -35,7 +35,7 @@ Matrix::Matrix(int rows, int cols) : m(rows), n(cols), p(new mel[rows*cols])
         n = 1;
         throw std::exception();
     }
-    if (m > 1000 || n > 1000)
+    if (m > 10000 || n > 10000)
     {
         std::cout << "\nMatrix dimensions exceed 1000.\n";
         m = 1;
@@ -55,7 +55,7 @@ Matrix::Matrix() : m(1), n(1), p(new mel[1])
         n = 1;
         throw std::exception();
     }
-    if (m > 1000 || n > 1000)
+    if (m > 10000 || n > 10000)
     {
         std::cout << "\nMatrix dimensions exceed 1000.\n";
         m = 1;

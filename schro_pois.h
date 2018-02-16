@@ -13,7 +13,8 @@
 
 //void solve_sp(Matrix dEc, Matrix eps, Matrix m, Matrix Q, Matrix E);
 
-void poiss_solve(Matrix Q, Matrix eps, Matrix *V);
+//void poiss_solve(Matrix Q, Matrix eps, Matrix *V);
+void poiss_solve(Matrix Q, Matrix eps, Matrix *V, double top_bc, double bot_bc);
 void schro_solve(Matrix U, Matrix m, Matrix* psi, Matrix* E);
 
 Matrix diff2_n(int n);
@@ -34,5 +35,7 @@ Matrix transpose(Matrix A);
 Matrix q_psi(Matrix U, Matrix Ef, Matrix m, Matrix E, Matrix psi, double T);
 Matrix q_boltz(Matrix U, Matrix Ef, Matrix m, double T);
 double fermi_integral(double E);
+
+double fermi_level(double me, double mh, double Eg, double T, double dop_conc);
 
 #endif // SCHRO_POIS_H
